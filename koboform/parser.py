@@ -107,5 +107,3 @@ def XLSFormParser():
                                 .format(p))
 
     return yacc.yacc(debug=False, write_tables=False, errorlog=logger)
-
-    
