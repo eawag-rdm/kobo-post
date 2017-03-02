@@ -2,6 +2,10 @@
 
 import ply.lex as lex
 import ply.yacc as yacc
+import logging
+
+logger = logging.getLogger()
+logger.setLevel(40)
 
 tokens0 = [
     'ID',
@@ -48,14 +52,17 @@ def XLSFormLexer():
     
     def t_ID(t):
         r'[a-zA-Z_][a-zA-Z_0-9]*'
-        t.type = reserved.get(t.value, 'ID')
-        return t
+        t.type = reserved.get(t.value, None)
+        if not t.type:
+            raise lex.LexError('Illegal token: {}'.format(t.value), '')
+        else:
+            return t
     
     def t_error(t):
-        print("Illegal character '{}'".format(t.value))
-        t.lexer.skip(1)
+        raise lex.LexError('Illegal character: {} at lexpos {}'
+                           .format(t.value, t.lexpos), '')
 
-    return lex.lex()
+    return lex.lex(errorlog=logger)
  
 ####### Parser
 
@@ -95,6 +102,10 @@ def XLSFormParser():
         '''boolex : SELECTED LPAREN term ',' term RPAREN'''
         p[0] = 'check_selected(' + p[3] + ', ' + p[5] + ')'
 
-    return yacc.yacc(debug=False, write_tables=False)
+    def p_error(p):
+        raise yacc.GrammarError('parser error while parsing {}'
+                                .format(p))
+
+    return yacc.yacc(debug=False, write_tables=False, errorlog=logger)
 
     
