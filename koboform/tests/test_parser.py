@@ -3,9 +3,9 @@
 from unittest import TestCase
 from ply.lex import LexError
 from ply.yacc import GrammarError
-from lexer import XLSFormLexer, XLSFormParser
+from parser import XLSFormLexer, XLSFormParser
 
-class TestLexer(TestCase):
+class TestParser(TestCase):
 
     def setUp(self):
         self.L = XLSFormLexer()
