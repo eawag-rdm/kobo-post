@@ -2,16 +2,25 @@
 
 from unittest import TestCase
 from mark_skipped import FormDef, Survey
+import os
+
 
 class TestFormDef(TestCase):
 
     def setUp(self):
-        self.form = FormDef('../data/DOB_F3.xls')
+        self.form = FormDef('data/DOB_F3.xls')
+        print('')
 
-    def test_mk_skip_conditions(self):
-        conds = self.form.mk_skipconditions()
-        print(conds)
-        #self.assertEqual(conds, ())
+    def test_read_skipconditions(self):
+        ret = self.form.read_skipconditions()
+        print(ret)
+        
+    def test__check_colnames(self):
+        conds = self.form.form.loc[:,('name', 'relevant')]
+        with self.assertLogs(level='WARN'):
+            self.form._check_colnames(conds)
+        #print(conds)
+        
 
 
 
