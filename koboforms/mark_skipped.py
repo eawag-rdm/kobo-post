@@ -48,14 +48,22 @@ class Survey(object):
         self.F = FormDef(formname)
         self.skiprules = self.F.read_skipconditions()
 
-    ## continue here
+    def _get_column(self, colname):
+        "returns series of lists for cells in colname"
+        column = self.quest.loc[:, colname].map(lambda x: x.split())
+        return(column)
+
+    def _check_selected(self, values, val):
+        "check whether val in values"
+        return val in values
+    
     def eval_skiprules(self):
-        def get_column(colname):
-            "returns list of list of values for cells in colname"
-            pass
+        get_column = self._getcolumn
+
+
 
         def check_selected(self, values, val):
-            "check whether val in values"
+
             pass
         
         
