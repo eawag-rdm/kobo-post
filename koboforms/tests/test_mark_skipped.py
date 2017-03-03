@@ -3,6 +3,7 @@
 from unittest import TestCase
 from mark_skipped import FormDef, Survey
 import os
+import pandas as pd
 
 
 class TestFormDef(TestCase):
@@ -13,19 +14,19 @@ class TestFormDef(TestCase):
 
     def test_read_skipconditions(self):
         ret = self.form.read_skipconditions()
-        self.assertEqual(
-            list(ret.loc[105]),
-            ['Appearance_of_pond_systems_e_',
-             ("check_selected(get_column('What_are_the_primary_secondar'), "
-              "'free_water_surface_constructed') or check_selected(get_column("
-              "'What_are_the_primary_secondar'), 'wsp___anaerobic_pond') or ch"
-              "eck_selected(get_column('What_are_the_primary_secondar'), 'wsp_"
-              "__facultative_pond') or check_selected(get_column('What_are_the"
-              "_primary_secondar'), 'wsp___maturation_pond') or check_selected"
-              "(get_column('What_are_the_primary_secondar'), 'aerated_pond') or "
-              "check_selected(get_column('What_are_the_primary_secondar'), 'pol"
-              "ishing_pond')")])
-        
+        desid = ['Appearance_of_pond_systems_e_',
+                 ("logical_or(logical_or(logical_or(logical_or(logical_or(chec"
+                  "k_selected(get_column('What_are_the_primary_secondar'), 'fr"
+                  "ee_water_surface_constructed'), check_selected(get_column('"
+                  "What_are_the_primary_secondar'), 'wsp___anaerobic_pond')), "
+                  "check_selected(get_column('What_are_the_primary_secondar'), "
+                  "'wsp___facultative_pond')), check_selected(get_column('What"
+                  "_are_the_primary_secondar'), 'wsp___maturation_pond')), che"
+                  "ck_selected(get_column('What_are_the_primary_secondar'), 'a"
+                  "erated_pond')), check_selected(get_column('What_are_the_pri"
+                  "mary_secondar'), 'polishing_pond'))")]
+        self.assertEqual(list(ret.loc[105]), desid)
+     
     def test__check_colnames(self):
         conds = self.form.form.loc[:,('name', 'relevant')]
         with self.assertLogs(level='WARN'):
@@ -50,15 +51,25 @@ class TestSurvey(TestCase):
 
     def test__check_selected(self):
         column = self.surv._get_column('Names_of_interviewers')
-        self.assertTrue(self.surv._check_selected(column[17], 'other'))
-        self.assertFalse(self.surv._check_selected(column[19], 'other'))
-        print(type(column))
+        isselected = self.surv._check_selected(column, 'other')
+        self.assertEqual(list(isselected[8:20]),
+                         [True, True, True, True, False,
+                          False, False, True, False, True, False, False])
         
-        
+    def test_eval_skiprules(self):
+        res = self.surv.eval_skiprules()
 
-# formname = '../data/DOB_F3.xls'
-# sname = '../data/DOB_F3_2017_03_01_compact.csv'
-# f = FormDef(formname)
+    def test__expand_skiprules(self):
+        self.surv._expand_groups()
+        
+    
+        
+            
+
+
+            
+
+            
 # s = Survey(sname)
 
 

@@ -51,15 +51,49 @@ class Survey(object):
     def _get_column(self, colname):
         "returns series of lists for cells in colname"
         column = self.quest.loc[:, colname].map(lambda x: x.split())
-        return(column)
+        return(column.reset_index(drop=True))
 
-    def _check_selected(self, values, val):
+    def _check_selected(self, column, val):
         "check whether val in values"
-        return val in values
+        return column.map(lambda x: val in x).reset_index(drop=True)
+
+    def _expand_groups(self):
+        "expands skiprules table for prefixed 'groups'"
+        print(self.quest.columns)
+        print(self.quest.columns.map(
+            lambda x: re.match('(group_.+\[\d+\])/(.+)', x)))
+        
+
+
+        
     
     def eval_skiprules(self):
-        get_column = self._getcolumn
+        '''Returns a DataFrame with relevant columns
+        that contain boolean indicator whether cell
+        was skipped or not.
+
+        ''' 
+        get_column = self._get_column
         check_selected = self._check_selected
+        logical_or = np.logical_or
+        logical_and = np.logical_and
+        logical_not = np.logical_not
+        skip = pd.DataFrame()
+        return(self.skiprules)
+        # for i, row in self.skiprules.iterrows():
+        #     print(eval(row['relevant']))
+        #  self.skiprules['rule'] = self.skiprules.apply(
+        #     lambda row: eval(row['relevant']), axis=1)
+        # print(self.skiprules)
+            #skip[col] = eval(rule)
+
+        # case1 = self.skiprules.iloc[0,:]
+        # colname, rule = case1
+        # result = eval(rule)
+        # print(colname)
+        # print(rule)
+        # print(result)
+        
         
 
 

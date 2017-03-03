@@ -19,6 +19,20 @@ class TestParser(TestCase):
                        "illegal = 'yes'",
                        "'leftside' = [holla]"]
         self.perrors = ["'yes' 'no'", "and 'yes'"]
+        self.partest = ["'one' = '1' and 'two' > '0' or 'three' <= '9'",
+                        "'one' = '1' and ('two' > '0' or 'three' <= '9')",
+                        "'one' = '1' and not 'two' > '0' or 'three' <= '9'",
+                        "'one' = '1' and not ('two' > '0' or 'three' <= '9')"]
+        
+        self.partestres = [("logical_or(logical_and(('one' == '1'), ('two' > "
+                            "'0')), ('three' <= '9'))"),
+                           ("logical_and(('one' == '1'), logical_or(('two' > '"
+                            "0'), ('three' <= '9')))"),
+                           ("logical_or(logical_and(('one' == '1'), logical_not"
+                            "(('two' > '0'))), ('three' <= '9'))"),
+                           ("logical_and(('one' == '1'), logical_not(logical_or"
+                            "(('two' > '0'), ('three' <= '9'))))")]
+
         self.lexres = [[('COLUMN','${Is_the_system_operational}',1,0),
                         ('EQUAL','==',1,29),
                         ('STRINGLIT',"'yes'",1,31)],
@@ -45,17 +59,8 @@ class TestParser(TestCase):
                         (',',',',1,43),
                         ('STRINGLIT',"'other_reason'",1,45),
                         ('RPAREN',')',1,59)]]
-        self.parseres = ["get_column('Is_the_system_operational') == 'yes'",
-                         ("get_column('Extensive_plant_growth_in_disc') == " +
-                          "'no_plant_growth' or get_column('Extensive_plant_" +
-                          "growth_in_disc') == 'yes__but_normal' or ( get_col" +
-                          "umn('Extensive_plant_growth_in_dis') == 'yes__rema" +
-                          "rkable_plant_growth' and 'hullu' == 'hullu' )" ),
-                         ("check_selected(get_column(' What_could_be_the_rea" +
-                          "son_Any_ '), 'other_reason')")]
 
     def test_lexer(self):
- 
         for i, ts in enumerate(self.tconds[0:3]):
             self.L.input(ts)
             for n, tok in enumerate(self.L):
@@ -73,8 +78,8 @@ class TestParser(TestCase):
          
 
     def test_parser(self):
-        for i, ts in enumerate(self.tconds[0:3]):
-            self.assertEqual(self.P.parse(ts), self.parseres[i])
-            for pe in self.perrors[0:2]:
-                with self.assertRaises(GrammarError):
-                    self.P.parse(pe)
+        for i, ts in enumerate(self.partest):
+            self.assertEqual(self.P.parse(ts), self.partestres[i])
+        for pe in self.perrors[0:2]:
+            with self.assertRaises(GrammarError):
+                self.P.parse(pe)

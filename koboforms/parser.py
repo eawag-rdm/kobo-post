@@ -67,18 +67,24 @@ def XLSFormLexer():
 ####### Parser
 
 def XLSFormParser():
+
+    precedence = (
+        ('left', 'AND', 'OR'),
+        ('right', 'NOT')
+    )
+    
     def p_boolex_andor(p):
         '''boolex : boolex AND boolex
                   | boolex OR boolex'''
-        p[0] = ' '.join([p[1], p[2], p[3]])
+        p[0] = 'logical_' + p[2] + '(' + p[1] + ', ' + p[3] + ')'
 
     def p_boolex_not(p):
         '''boolex : NOT boolex'''
-        p[0] = ' '.join(['not', p[2]])
+        p[0] = 'logical_not(' + p[2] + ')'
 
     def p_boolex_par(p):
         '''boolex : LPAREN boolex RPAREN'''
-        p[0] = ' '.join([p[1], p[2], p[3]])
+        p[0] = p[2]
 
     def p_boolex_term(p):
         '''boolex : term EQUAL term
@@ -87,12 +93,11 @@ def XLSFormParser():
                   | term GTEQ term
                   | term LT term
                   | term LTEQ term''' 
-        p[0] = ' '.join([p[1], p[2], p[3]])
+        p[0] = '(' + ' '.join([p[1], p[2], p[3]]) + ')'
 
     def p_term_stringlit(p):
         '''term : STRINGLIT'''
         p[0] = p[1]
-
 
     def p_term_column(p):
         'term : COLUMN'
