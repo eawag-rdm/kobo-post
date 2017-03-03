@@ -59,6 +59,8 @@ class Survey(object):
     
     def eval_skiprules(self):
         get_column = self._getcolumn
+        check_selected = self._check_selected
+        
 
 
 

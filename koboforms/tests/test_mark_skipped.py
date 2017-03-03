@@ -52,6 +52,7 @@ class TestSurvey(TestCase):
         column = self.surv._get_column('Names_of_interviewers')
         self.assertTrue(self.surv._check_selected(column[17], 'other'))
         self.assertFalse(self.surv._check_selected(column[19], 'other'))
+        print(type(column))
         
         
 
