@@ -25,6 +25,23 @@ class FormDef(object):
             logger.warn('bad columnname in "name":\n{}\n--> dropping'.format(wrong))
             conds.drop(wrong.index, inplace=True)
         return conds
+
+    def _mk_loopgrouping(self):
+        idxstart = self.form.loc[self.form['type'] == 'begin repeat',:].index
+        idxend = self.form.loc[self.form['type'] == 'end repeat',:].index
+        indexranges = [range(a+1, b) for a, b in zip(idxstart, idxend)] 
+        groups = [self.form.loc[i, 'name'] for i in idxstart]
+        colnamegroups = [self.form.loc[a+1:b-1, 'name']
+                         for a, b in zip(idxstart, idxend)]
+        assert(len(idxstart) == len(idxend) == len(groups))
+
+        loopdict = {groups[i]: {'indices': list(indexranges[i]),
+                                'colnames': list(colnamegroups[i])}
+                    for i in range(0, len(groups))}
+        # make {index1: group, index2: group, .. }structure
+        print('LOOPDICT')
+        print(str(loopdict))
+
     
     def read_skipconditions(self):
         conds = self.form.loc[:,('name', 'relevant')]

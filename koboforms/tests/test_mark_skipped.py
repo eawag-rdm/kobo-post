@@ -34,6 +34,10 @@ class TestFormDef(TestCase):
         self.assertNotIn(15, conds)
         self.assertEqual(len(conds), 248)
 
+    def test__mk_loopgrouping(self):
+        print('')
+        self.form._mk_loopgrouping()
+
         
 class TestSurvey(TestCase):
     
@@ -59,8 +63,8 @@ class TestSurvey(TestCase):
     def test_eval_skiprules(self):
         res = self.surv.eval_skiprules()
 
-    def test__expand_skiprules(self):
-        self.surv._expand_groups()
+    # def test__expand_skiprules(self):
+    #     self.surv._expand_groups()
         
     
         
