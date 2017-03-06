@@ -148,32 +148,12 @@ class Survey(object):
         logical_not = np.logical_not
 
         skip = pd.DataFrame()
-        for i, row in self.skiprules[0:5].iterrows():
+        for i, row in self.skiprules.iterrows():
             skip[row['name']] = eval(row['relevant']).apply(lambda x: not x)
-            # if row['name'] == 'Others_003_001_001':
-            #      print(row['relevant'])
-        # print("ANCIL COL")
-        # print(get_column('What_are_the_primary_secondar')[61:63])
-        # print("SKIPPED")
-        # print(skip[skip['Others_003_001_001'] == True].index.tolist())
+        return(skip)
 
-        print(get_column('What_are_the_primary_secondar').tolist())
-        
-        #print("i: {} NAME: {} SKIP: {}".format(i, row['name'], eval(row['relevant'])))
-
-        # case1 = self.skiprules.iloc[0,:]
-        # colname, rule = case1
-        # result = eval(rule)
-        # print(colname)
-        # print(rule)
-        # print(result)
+    def write_new_questionaire(self):
+        skip = self.eval_skiprules()
+        # write new, check for overwriting other than ''
 
         
-        
-
-    
-
-
-
-
-

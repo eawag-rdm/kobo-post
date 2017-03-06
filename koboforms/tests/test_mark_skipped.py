@@ -81,25 +81,9 @@ class TestSurvey(TestCase):
                           False, False, True, False, True, False, False])
         
     def test_eval_skiprules(self):
-        res = self.surv.eval_skiprules()
+        skip = self.surv.eval_skiprules()
+        col = 'Others_003_001_001'
+        print(skip[col][skip[col]])
+        self.assertEqual(skip[col][skip[col]].index.tolist(),
+                         [2, 62, 69, 70, 98])
 
-    # def test__expand_skiprules(self):
-    #     self.surv._expand_groups()
-        
-    
-        
-            
-
-
-            
-
-            
-# s = Survey(sname)
-
-
-
-         
-        
-        
-#   p[0] = 'check_selected(' + p[3] + ', ' + p[5] + ')'
-#    'get_column(\'' + p[1][2:-1] + '\')'
