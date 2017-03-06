@@ -26,23 +26,69 @@ class FormDef(object):
             conds.drop(wrong.index, inplace=True)
         return conds
 
-    def _mk_loopgrouping(self):
-        idxstart = self.form.loc[self.form['type'] == 'begin repeat',:].index
-        idxend = self.form.loc[self.form['type'] == 'end repeat',:].index
-        indexranges = [range(a+1, b) for a, b in zip(idxstart, idxend)] 
-        groups = [self.form.loc[i, 'name'] for i in idxstart]
-        colnamegroups = [self.form.loc[a+1:b-1, 'name']
-                         for a, b in zip(idxstart, idxend)]
-        assert(len(idxstart) == len(idxend) == len(groups))
+    def _mk_loopgrouping(self, survey):
+        """Modifies the form description to explicitly define
+        columns defines in loops over groups and the respective conditions.
+        
+        """ 
+        def get_replacement_rules(groupname, oldrule, colnam, prefixes):
+            """Create a sub-dataframe that contains the group specific
+            replacement definition/conditions.
 
-        loopdict = {groups[i]: {'indices': list(indexranges[i]),
-                                'colnames': list(colnamegroups[i])}
-                    for i in range(0, len(groups))}
-        # make {index1: group, index2: group, .. }structure
-        print('LOOPDICT')
-        print(str(loopdict))
+            """
+            repdf = pd.DataFrame()
+            # create new columnname / condition pairs
+            for p in prefixes:
+                newrule = oldrule.copy(deep=True)
+                newrule.set_value('name', p + colnam)
+                newcondition = newrule['relevant']
+                # find and replace prefixed columns in condition
+                for cn in loopdict[groupname]['colnames']:
+                    newcondition = newcondition.replace(cn, p + cn)
+                repdf = repdf.append(newrule.set_value('relevant', newcondition))
+            return(repdf)
 
-    
+        def collect_loop_info():
+            """Gather info about columnames defined in repeat-loops"""
+            idxstart = self.form.loc[self.form['type'] == 'begin repeat',:].index
+            idxend = self.form.loc[self.form['type'] == 'end repeat',:].index
+            indexranges = [range(a+1, b) for a, b in zip(idxstart, idxend)] 
+            groups = [self.form.loc[i, 'name'] for i in idxstart]
+            colnamegroups = [self.form.loc[a+1:b-1, 'name']
+                             for a, b in zip(idxstart, idxend)]
+            assert(len(idxstart) == len(idxend) == len(groups))
+
+            loopdict = {groups[i]: {'indices': list(indexranges[i]),
+                                    'colnames': list(colnamegroups[i])}
+                        for i in range(0, len(groups))}
+            indexdict = {idx: grp
+                         for i, grp in enumerate(groups)
+                         for idx in indexranges[i]}
+            return (loopdict, indexdict)
+
+        loopdict, indexdict = collect_loop_info()
+
+        # find conditional rows in repeat-loops
+        idx_relevant = self.form.loc[pd.notnull(self.form.relevant)].index
+        idx_relevant = [i for i in idx_relevant if i in indexdict]
+
+        # get replacement rows for instances of groups that were actually created
+        prefixpat = r'(group_\S+\[\d+\]/)'
+        for idx in idx_relevant:
+            groupname = indexdict[idx]
+            oldrule = self.form.loc[idx,:]
+            colnam = oldrule['name']
+            prefixes = []
+            for mat in [re.match(prefixpat + colnam, c)
+                        for c in survey.get_columnnames()]:
+                if mat:
+                    prefixes.append(mat.group(1))
+            repdf = get_replacement_rules(groupname, oldrule, colnam, prefixes)
+            
+            # replace tho old rule - line with new ones
+            self.form = self.form.drop(idx)
+            self.form =self.form.append(repdf) 
+   
     def read_skipconditions(self):
         conds = self.form.loc[:,('name', 'relevant')]
         conds = self._check_colnames(conds)
@@ -74,15 +120,8 @@ class Survey(object):
         "check whether val in values"
         return column.map(lambda x: val in x).reset_index(drop=True)
 
-    def _expand_groups(self):
-        "expands skiprules table for prefixed 'groups'"
-        print(self.quest.columns)
-        print(self.quest.columns.map(
-            lambda x: re.match('(group_.+\[\d+\])/(.+)', x)))
-        
-
-
-        
+    def get_columnnames(self):
+        return self.quest.columns
     
     def eval_skiprules(self):
         '''Returns a DataFrame with relevant columns
