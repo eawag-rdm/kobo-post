@@ -40,11 +40,11 @@ class TestFormDef(TestCase):
         self.assertNotIn(15, conds)
         self.assertEqual(len(conds), 248)
 
-    def test__mk_loopgrouping(self):
+    def test_mk_loopgrouping(self):
         self.form = FormDef('data/Test_Formdef_Loops.xls')
         self.surv = Survey('data/Test_Loops_DOB_F3_compact.csv',
                            'data/Test_Formdef_Loops.xls' )
-        self.form._mk_loopgrouping(self.surv)
+        self.form.mk_loopgrouping(self.surv)
         l = self.form.form.loc[[5,12], ['name', 'relevant']].values
         expect = np.array([['group_vq7sw37[1]/Others_003',
                              "${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'kitchen_grease' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'oil_skimmer' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'screen_with_ma' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'screen_with_me' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'grit_removal' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'grease_trap_at' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'integrated_gri' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'other'"],
@@ -69,8 +69,8 @@ class TestSurvey(TestCase):
 
     def test__get_column(self):
         res = self.surv._get_column('Names_of_interviewers')
-        self.assertEqual(res[19], ['rohan'])
-        self.assertEqual(res[17], ['rohan', 'other'])
+        self.assertEqual(res[19], 'rohan')
+        self.assertEqual(res[17], 'rohan other')
         self.assertEqual(len(res), 132)
 
     def test__check_selected(self):

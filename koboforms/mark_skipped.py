@@ -26,7 +26,7 @@ class FormDef(object):
             conds.drop(wrong.index, inplace=True)
         return conds
 
-    def _mk_loopgrouping(self, survey):
+    def mk_loopgrouping(self, survey):
         """Modifies the form description to explicitly define
         columns defines in loops over groups and the respective conditions.
         
@@ -109,16 +109,23 @@ class Survey(object):
     def __init__(self, surveyname, formname):
         self.quest = pd.read_csv(surveyname)
         self.F = FormDef(formname)
-        self.skiprules = self.F.read_skipconditions()
+        self._repl_na()
 
+    def _repl_na(self):
+        "replace n/a with empty string"
+        #print(self.quest.loc[62,['What_are_the_primary_secondar', 'Others_003_001_001']])
+        self.quest.replace(to_replace='n/a', value='', inplace=True)
+        #print(self.quest.loc[62,['What_are_the_primary_secondar', 'Others_003_001_001']])
+        
+        
     def _get_column(self, colname):
         "returns series of lists for cells in colname"
-        column = self.quest.loc[:, colname].map(lambda x: x.split())
-        return(column.reset_index(drop=True))
+        column = self.quest.loc[:, colname]
+        return column
 
     def _check_selected(self, column, val):
         "check whether val in values"
-        return column.map(lambda x: val in x).reset_index(drop=True)
+        return column.map(lambda x: val in x.split()).reset_index(drop=True)
 
     def get_columnnames(self):
         return self.quest.columns
@@ -128,20 +135,31 @@ class Survey(object):
         that contain boolean indicator whether cell
         was skipped or not.
 
-        ''' 
+        '''
+        # fix loops in FormDef object
+        self.F.mk_loopgrouping(self)
+        # get skiprules
+        self.skiprules = self.F.read_skipconditions()
+        # define functionnames for evaluation of skiprules
         get_column = self._get_column
         check_selected = self._check_selected
         logical_or = np.logical_or
         logical_and = np.logical_and
         logical_not = np.logical_not
+
         skip = pd.DataFrame()
-        return(self.skiprules)
-        # for i, row in self.skiprules.iterrows():
-        #     print(eval(row['relevant']))
-        #  self.skiprules['rule'] = self.skiprules.apply(
-        #     lambda row: eval(row['relevant']), axis=1)
-        # print(self.skiprules)
-            #skip[col] = eval(rule)
+        for i, row in self.skiprules[0:5].iterrows():
+            skip[row['name']] = eval(row['relevant']).apply(lambda x: not x)
+            # if row['name'] == 'Others_003_001_001':
+            #      print(row['relevant'])
+        # print("ANCIL COL")
+        # print(get_column('What_are_the_primary_secondar')[61:63])
+        # print("SKIPPED")
+        # print(skip[skip['Others_003_001_001'] == True].index.tolist())
+
+        print(get_column('What_are_the_primary_secondar').tolist())
+        
+        #print("i: {} NAME: {} SKIP: {}".format(i, row['name'], eval(row['relevant'])))
 
         # case1 = self.skiprules.iloc[0,:]
         # colname, rule = case1
@@ -149,14 +167,7 @@ class Survey(object):
         # print(colname)
         # print(rule)
         # print(result)
-        
-        
 
-
-
-        def check_selected(self, values, val):
-
-            pass
         
         
 
