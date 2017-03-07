@@ -14,8 +14,10 @@ class TestFormDef(TestCase):
 
     def setUp(self):
         self.form = FormDef('data/DOB_F3.xls')
-        self.surv = Survey('data/DOB_F3_2017_03_01_compact.csv',
-                           'data/DOB_F3.xls' )
+        # self.surv = Survey('data/DOB_F3_2017_03_01_compact.csv',
+        #                    'data/DOB_F3.xls')
+        self.surv = Survey('data/DOB_F3_2017_03_07_08_14_30.xlsx',
+                           'data/DOB_F3.xls')
         print('')
 
     def test_read_skipconditions(self):
@@ -63,8 +65,8 @@ class TestSurvey(TestCase):
     
     def setUp(self):
         self.form = FormDef('data/DOB_F3.xls')
-        self.surv = Survey('data/DOB_F3_2017_03_01_compact.csv',
-                           'data/DOB_F3.xls' )
+        self.surv = Survey('data/DOB_F3_2017_03_07_08_14_30.xlsx',
+                           'data/DOB_F3.xls')
         print('')
 
     def test__get_column(self):
@@ -83,7 +85,10 @@ class TestSurvey(TestCase):
     def test_eval_skiprules(self):
         skip = self.surv.eval_skiprules()
         col = 'Others_003_001_001'
-        print(skip[col][skip[col]])
         self.assertEqual(skip[col][skip[col]].index.tolist(),
                          [2, 62, 69, 70, 98])
+    
+    def test_write_new_questionaire(self):
+        self.surv.write_new_questionaire('DOB_F3_result.csv')
 
+    

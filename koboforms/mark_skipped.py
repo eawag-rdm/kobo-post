@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 import re
+import os
 import logging
 from parser import XLSFormParser
 from parser import XLSFormLexer
@@ -14,14 +15,14 @@ class FormDef(object):
     """Represents a KoBoToolbox - form definition"""
 
     def __init__(self, formname):
-        self.form = pd.read_excel(formname)
+        self.form = pd.read_excel(formname, na_values=None, keep_default_na=[]).applymap(lambda x: str(x))
         self.P = XLSFormParser()
         self.L = XLSFormLexer()
         self.prefixpat = r'(group_\S+\[\d+\]/)'
 
     def _check_colnames(self, conds):
-        "check for non-strings in 'name' - column"
-        wrong = conds[[not isinstance(n, str) for n in conds.name]]
+        "check for empty strings in 'name' - column"
+        wrong = conds[conds.name == '']
         if not wrong.empty:
             logger.warn('bad columnname in "name":\n{}\n--> dropping'.format(wrong))
             conds.drop(wrong.index, inplace=True)
@@ -73,7 +74,6 @@ class FormDef(object):
             idx_relevant = [i for i in idx_relevant if i in indexdict]
             return idx_relevant
         
-        # get replacement rows for instances of groups that were actually created
         def expand_form(idx, indexdict):
             "expands one rule at idx in a loop"
             groupname = indexdict[idx]
@@ -97,7 +97,7 @@ class FormDef(object):
     def read_skipconditions(self):
         conds = self.form.loc[:,('name', 'relevant')]
         conds = self._check_colnames(conds)
-        conds = conds[(pd.notnull(conds.relevant))]
+        conds = conds[conds.relevant != '']
         conds.relevant = conds.relevant.map(self.P.parse)
         return conds
 
@@ -112,16 +112,19 @@ class Survey(object):
     """
 
     def __init__(self, surveyname, formname):
-        self.quest = pd.read_csv(surveyname)
+        ftyp = os.path.splitext(surveyname)[1].upper()
+        if ftyp == '.CSV':
+            self.quest = pd.read_csv(surveyname)
+        elif ftyp in ['.XLS', '.XLSX']:
+            self.quest = pd.read_excel(surveyname, na_values=[], keep_default_na=False).applymap(lambda x: str(x))
+        else:
+            raise(Exception('No valid file extension for {}'.format(surveyname)))
         self.F = FormDef(formname)
         self._repl_na()
 
     def _repl_na(self):
         "replace n/a with empty string"
-        #print(self.quest.loc[62,['What_are_the_primary_secondar', 'Others_003_001_001']])
         self.quest.replace(to_replace='n/a', value='', inplace=True)
-        #print(self.quest.loc[62,['What_are_the_primary_secondar', 'Others_003_001_001']])
-        
         
     def _get_column(self, colname):
         "returns series of lists for cells in colname"
@@ -157,8 +160,34 @@ class Survey(object):
             skip[row['name']] = eval(row['relevant']).apply(lambda x: not x)
         return(skip)
 
-    def write_new_questionaire(self):
+    def write_new_questionaire(self, outpath):
         skip = self.eval_skiprules()
-        # write new, check for overwriting other than ''
+        # same axis-0 count?
+        assert(skip.shape[0] == self.quest.shape[0])
+        # same index?
+        assert(all(skip.index == self.quest.index))
+        # all columns in skip also in original quest?
+        missingcols = list(set(skip.columns) - set(self.quest.columns))
+        if len(missingcols) > 0:
+            logger.warn('Columns in form definition '
+                        'that do not appear in survey:\n{}'
+                        .format(missingcols))
+        # indices are the same?
+        assert(all(skip.index == self.quest.index))
+        # apply the skipped - marker
+        newform = self.quest.copy(deep = True)
+        for colname in skip.columns:
+            newform[colname] = newform.where(np.logical_not(skip[colname]),
+                                             other='_SKIPPED_')
+        # check skipped values where 'n/a' or ''
+        isempty = np.logical_or(self.quest == '', self.quest == 'n/a')
+        isskipped = newform == '_SKIPPED_'
+        assert(all(isskipped == isempty))
+        # convert '' to 'NA'
+        newform.replace(to_replace='', value='NA', inplace=True)
+        with open(outpath, 'w') as f:
+            newform.to_csv(f, index=False, line_terminator='\r\n')
+
+        
 
         
