@@ -17,6 +17,7 @@ class FormDef(object):
         self.form = pd.read_excel(formname)
         self.P = XLSFormParser()
         self.L = XLSFormLexer()
+        self.prefixpat = r'(group_\S+\[\d+\]/)'
 
     def _check_colnames(self, conds):
         "check for non-strings in 'name' - column"
@@ -66,29 +67,33 @@ class FormDef(object):
                          for idx in indexranges[i]}
             return (loopdict, indexdict)
 
-        loopdict, indexdict = collect_loop_info()
-
-        # find conditional rows in repeat-loops
-        idx_relevant = self.form.loc[pd.notnull(self.form.relevant)].index
-        idx_relevant = [i for i in idx_relevant if i in indexdict]
-
+        def get_rules_in_loops_by_idx(indexdict):
+            "find conditional rows in repeat-loops"
+            idx_relevant = self.form.loc[pd.notnull(self.form.relevant)].index
+            idx_relevant = [i for i in idx_relevant if i in indexdict]
+            return idx_relevant
+        
         # get replacement rows for instances of groups that were actually created
-        prefixpat = r'(group_\S+\[\d+\]/)'
-        for idx in idx_relevant:
+        def expand_form(idx, indexdict):
+            "expands one rule at idx in a loop"
             groupname = indexdict[idx]
             oldrule = self.form.loc[idx,:]
             colnam = oldrule['name']
             prefixes = []
-            for mat in [re.match(prefixpat + colnam, c)
+            for mat in [re.match(self.prefixpat + colnam, c)
                         for c in survey.get_columnnames()]:
                 if mat:
                     prefixes.append(mat.group(1))
             repdf = get_replacement_rules(groupname, oldrule, colnam, prefixes)
-            
-            # replace tho old rule - line with new ones
+            # replace the old rule - line with new ones
             self.form = self.form.drop(idx)
-            self.form =self.form.append(repdf) 
-   
+            self.form =self.form.append(repdf)
+
+        loopdict, indexdict = collect_loop_info()
+        idx_relevant = get_rules_in_loops_by_idx(indexdict)
+        for idx in idx_relevant:
+            expand_form(idx, indexdict)
+        
     def read_skipconditions(self):
         conds = self.form.loc[:,('name', 'relevant')]
         conds = self._check_colnames(conds)
