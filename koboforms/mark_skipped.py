@@ -1,6 +1,13 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 # _*_ coding: utf-8 _*_
+"""mark_skipped.py
 
+Usage:
+  mark_skipped.py <questionaire> <form_definition>
+
+""" 
+
+from docopt import docopt
 import pandas as pd
 import numpy as np
 import re
@@ -187,6 +194,17 @@ class Survey(object):
         newform.replace(to_replace='', value='NA', inplace=True)
         with open(outpath, 'w') as f:
             newform.to_csv(f, index=False, line_terminator='\r\n')
+
+def main():
+    arguments = docopt(__doc__, help=True)
+    surv = Survey(arguments['<questionaire>'], arguments['<form_definition>'])
+    base, ext = os.path.splitext(arguments['<questionaire>'])
+    outpath = base + '_SKIP' + '.csv'
+    surv.write_new_questionaire(outpath)
+
+if __name__ == '__main__':
+    main()
+        
 
         
 
