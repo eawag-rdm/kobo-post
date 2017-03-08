@@ -3,21 +3,22 @@
 from unittest import TestCase
 from mark_skipped import FormDef, Survey
 import os
+import sys
 import pandas as pd
 import numpy as np
 
 
 pd.options.display.max_colwidth = 200
 
+modpath = os.path.split(os.path.dirname(sys.modules[__name__].__file__))[0]
+datapath = os.path.join(os.path.split(modpath)[0], 'data')
 
 class TestFormDef(TestCase):
 
     def setUp(self):
-        self.form = FormDef('data/DOB_F3.xls')
-        # self.surv = Survey('data/DOB_F3_2017_03_01_compact.csv',
-        #                    'data/DOB_F3.xls')
-        self.surv = Survey('data/DOB_F3_2017_03_07_08_14_30.xlsx',
-                           'data/DOB_F3.xls')
+        self.form = FormDef(os.path.join(datapath, 'DOB_F3.xls'))
+        self.surv = Survey(os.path.join(datapath, 'DOB_F3_2017_03_07_08_14_30.xlsx'),
+                           os.path.join(datapath, 'DOB_F3.xls'))
         print('')
 
     def test_read_skipconditions(self):
@@ -43,9 +44,9 @@ class TestFormDef(TestCase):
         self.assertEqual(len(conds), 248)
 
     def test_mk_loopgrouping(self):
-        self.form = FormDef('data/Test_Formdef_Loops.xls')
-        self.surv = Survey('data/Test_Loops_DOB_F3_compact.csv',
-                           'data/Test_Formdef_Loops.xls' )
+        self.form = FormDef(os.path.join(datapath, 'Test_Formdef_Loops.xls'))
+        self.surv = Survey(os.path.join(datapath, 'Test_Loops_DOB_F3_compact.csv'),
+                           os.path.join(datapath, 'Test_Formdef_Loops.xls'))
         self.form.mk_loopgrouping(self.surv)
         l = self.form.form.loc[[5,12], ['name', 'relevant']].values
         expect = np.array([['group_vq7sw37[1]/Others_003',
@@ -64,11 +65,29 @@ class TestFormDef(TestCase):
 class TestSurvey(TestCase):
     
     def setUp(self):
-        self.form = FormDef('data/DOB_F3.xls')
-        self.surv = Survey('data/DOB_F3_2017_03_07_08_14_30.xlsx',
-                           'data/DOB_F3.xls')
+        self.form = FormDef(os.path.join(datapath, 'DOB_F3.xls'))
+        self.surv = Survey(os.path.join(datapath, 'DOB_F3_2017_03_07_08_14_30.xlsx'),
+                           os.path.join(datapath, 'DOB_F3.xls'))
         print('')
 
+    def test_read_workbook(self):
+        res = self.surv._read_workbook()
+        print([d.shape for d in res[0].values()])
+        self.assertEqual(set([d.shape for d in res[0].values()]),
+                         set([(132, 257), (114, 10)]))
+        self.assertEqual(res[1], ['uploaded_form_dkhgoz', 'group_vq7sw37'])
+
+    def test__massage_group_tables(self):
+        res = self.surv._massage_group_tables()
+        self.assertEqual(list(res.keys()), ['group_vq7sw37'])
+
+    def test_join_main_and_groups(self):
+        res = self.surv.quest
+        print(res.columns)
+        print(res.shape)
+        print(res._merge_group_vq7sw37)
+
+        
     def test__get_column(self):
         res = self.surv._get_column('Names_of_interviewers')
         self.assertEqual(res[19], 'rohan')

@@ -119,16 +119,83 @@ class Survey(object):
     """
 
     def __init__(self, surveyname, formname):
-        ftyp = os.path.splitext(surveyname)[1].upper()
-        if ftyp == '.CSV':
-            self.quest = pd.read_csv(surveyname)
-        elif ftyp in ['.XLS', '.XLSX']:
-            self.quest = pd.read_excel(surveyname, na_values=[], keep_default_na=False).applymap(lambda x: str(x))
-        else:
-            raise(Exception('No valid file extension for {}'.format(surveyname)))
+        self.surveyname = surveyname
+        self.data, self.sheetnames = self._read_workbook()
+        self.quest = self.join_main_and_groups()
+        
+        # ftyp = os.path.splitext(surveyname)[1].upper()
+        # if ftyp == '.CSV':
+        #     self.quest = pd.read_csv(surveyname)
+        # elif ftyp in ['.XLS', '.XLSX']:
+        #     self.quest = pd.read_excel(surveyname, na_values=[], keep_default_na=False).applymap(lambda x: str(x))
+        # else:
+        #     raise(Exception('No valid file extension for {}'.format(surveyname)))
+        # self.quest = self._massage_group_tables(
+        #     self._read_workbook(surveyname))
         self.F = FormDef(formname)
         self._repl_na()
 
+    def _read_workbook(self):
+        """reads all worksheets of an Excel file.
+        first sheet is interpreted as 'main', others as
+        partial results from groups.
+
+        """
+        data = {}
+        with pd.ExcelFile(self.surveyname,
+                          na_values=[],keep_default_na=False) as xls:
+            sheets = xls.sheet_names
+            data['main'] = pd.read_excel(xls, sheets[0], na_values=[],
+                                         keep_default_na=False,
+                                         index_col='_index')
+            data.update(pd.read_excel(xls, sheets[1:], na_values=[],
+                                         keep_default_na=False))
+        return([data, sheets])
+
+    def _massage_group_tables(self):
+        """parses group-tables into tables suited for joining
+        with main table.
+
+        """
+        data = {key: self.data[key] for key in self.sheetnames[1:]}
+        grouptables = {}
+        for d in data:
+            # get maximum number of group elements
+            par_idxs = data[d]._parent_index.tolist()
+            nmax = max([par_idxs.count(x) for x in set(par_idxs)])
+            newdf = pd.DataFrame(index = list(set(par_idxs)))
+            # add groupcolumns
+            groupcols = [c for c in data[d].columns if c[0] != '_']
+            gcpairs = [c.split('/') for c in groupcols]
+            for newcol in [d + '[' + str(i) + ']' + '/' + gc[1]
+                           for gc in gcpairs for i in range(1, nmax + 1)]:
+                newdf[newcol] = ''
+            # populate new df
+            idxcount = {}
+            for i, row in newdf.iterrows():
+                newdict = {}
+                gcount = 0
+                for _, oldrow in data[d].loc[data[d]._parent_index == i,
+                                             groupcols].iterrows():
+                    ocpairs = [c.split('/') for c in oldrow[oldrow != ''].index]
+                    gcount += 1
+                    newdict.update({c[0]+'['+str(gcount)+']/'+c[1]:
+                                    oldrow[c[0]+'/'+c[1]] for c in ocpairs})
+                newdf.loc[i] = pd.Series(newdict)
+            grouptables[d] = newdf
+        return(grouptables)
+
+    def join_main_and_groups(self):
+        grouptables = self._massage_group_tables()
+        for gname, gtable in grouptables.items():
+            self.data['main'] = pd.merge(self.data['main'],
+                                         gtable,
+                                         left_index=True,
+                                         right_index=True,
+                                         how='outer',
+                                         indicator='_merge_'+gname)
+        return(self.data['main'])
+            
     def _repl_na(self):
         "replace n/a with empty string"
         self.quest.replace(to_replace='n/a', value='', inplace=True)
