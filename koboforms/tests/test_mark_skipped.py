@@ -45,20 +45,31 @@ class TestFormDef(TestCase):
 
     def test_mk_loopgrouping(self):
         self.form = FormDef(os.path.join(datapath, 'Test_Formdef_Loops.xls'))
-        self.surv = Survey(os.path.join(datapath, 'Test_Loops_DOB_F3_compact.csv'),
+        self.surv = Survey(os.path.join(datapath, 'DOB_F3_2017_03_07_08_14_30.xlsx'),
                            os.path.join(datapath, 'Test_Formdef_Loops.xls'))
         self.form.mk_loopgrouping(self.surv)
-        l = self.form.form.loc[[5,12], ['name', 'relevant']].values
+        l = self.form.form.loc[5, ['name', 'relevant']].values
         expect = np.array([['group_vq7sw37[1]/Others_003',
-                             "${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'kitchen_grease' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'oil_skimmer' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'screen_with_ma' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'screen_with_me' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'grit_removal' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'grease_trap_at' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'integrated_gri' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'other'"],
-                            ['group_vq7sw37[2]/Others_003',
-                             "${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'kitchen_grease' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'oil_skimmer' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'screen_with_ma' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'screen_with_me' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'grit_removal' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'grease_trap_at' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'integrated_gri' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'other'"],
-                            ['group_vq7sw37[3]/Others_003',
-                             "${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'kitchen_grease' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'oil_skimmer' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'screen_with_ma' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'screen_with_me' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'grit_removal' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'grease_trap_at' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'integrated_gri' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'other'"],
-                            ['group_a1b1c1[3]/TestColumnB',
-                             "${group_a1b1c1[3]/TestColumnA} = '' and ${group_a1b1c1[3]/TestColumnC} >= 'hahaha' or ${Project_code} !=  'huhu'"],
-                            ['group_a1b1c1[5]/TestColumnB',
-                             "${group_a1b1c1[5]/TestColumnA} = '' and ${group_a1b1c1[5]/TestColumnC} >= 'hahaha' or ${Project_code} !=  'huhu'"]])
+                            ("${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'kitchen_grease' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'oil_skimmer' or ${group_vq7sw37[1]/What_pre_treatment_sta"
+                             "ges_are} = 'screen_with_ma' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'screen_with_me' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'grit_removal' or ${group_vq7s"
+                             "w37[1]/What_pre_treatment_stages_are} = 'grease_trap_at' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'integrated_gri' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = '"
+                             "other'")],
+                           ['group_vq7sw37[2]/Others_003',
+                            ("${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'kitchen_grease' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'oil_skimmer' or ${group_vq7sw37[2]/What_pre_treatment_sta"
+                             "ges_are} = 'screen_with_ma' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'screen_with_me' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'grit_removal' or ${group_vq7s"
+                             "w37[2]/What_pre_treatment_stages_are} = 'grease_trap_at' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'integrated_gri' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = '"
+                             "other'")],
+                           ['group_vq7sw37[3]/Others_003',
+                            ("${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'kitchen_grease' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'oil_skimmer' or ${group_vq7sw37[3]/What_pre_treatment_sta"
+                             "ges_are} = 'screen_with_ma' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'screen_with_me' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'grit_removal' or ${group_vq7s"
+                             "w37[3]/What_pre_treatment_stages_are} = 'grease_trap_at' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'integrated_gri' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = '"
+                             "other'")],
+                           ['group_vq7sw37[4]/Others_003',
+                            ("${group_vq7sw37[4]/What_pre_treatment_stages_are} = 'kitchen_grease' or ${group_vq7sw37[4]/What_pre_treatment_stages_are} = 'oil_skimmer' or ${group_vq7sw37[4]/What_pre_treatment_sta"
+                             "ges_are} = 'screen_with_ma' or ${group_vq7sw37[4]/What_pre_treatment_stages_are} = 'screen_with_me' or ${group_vq7sw37[4]/What_pre_treatment_stages_are} = 'grit_removal' or ${group_vq7s"
+                             "w37[4]/What_pre_treatment_stages_are} = 'grease_trap_at' or ${group_vq7sw37[4]/What_pre_treatment_stages_are} = 'integrated_gri' or ${group_vq7sw37[4]/What_pre_treatment_stages_are} = '"
+                             "other'")]])
+
         self.assertTrue(np.all(l == expect))
 
         
@@ -83,15 +94,19 @@ class TestSurvey(TestCase):
 
     def test_join_main_and_groups(self):
         res = self.surv.quest
-        print(res.columns)
-        print(res.shape)
-        print(res._merge_group_vq7sw37)
-
+        self.assertEqual(res.shape, (132, 266))
+        self.assertTrue(all([c in res.columns for c in [
+            'group_vq7sw37[1]/What_pre_treatment_stages_are',
+            'group_vq7sw37[2]/What_pre_treatment_stages_are',
+            'group_vq7sw37[3]/What_pre_treatment_stages_are',
+            'group_vq7sw37[4]/What_pre_treatment_stages_are',
+            'group_vq7sw37[1]/Others_003', 'group_vq7sw37[2]/Others_003',
+            'group_vq7sw37[3]/Others_003', 'group_vq7sw37[4]/Others_003']]))
         
     def test__get_column(self):
         res = self.surv._get_column('Names_of_interviewers')
-        self.assertEqual(res[19], 'rohan')
-        self.assertEqual(res[17], 'rohan other')
+        self.assertEqual(res[20], 'rohan')
+        self.assertEqual(res[18], 'rohan other')
         self.assertEqual(len(res), 132)
 
     def test__check_selected(self):
@@ -105,7 +120,7 @@ class TestSurvey(TestCase):
         skip = self.surv.eval_skiprules()
         col = 'Others_003_001_001'
         self.assertEqual(skip[col][skip[col]].index.tolist(),
-                         [2, 62, 69, 70, 98])
+                         [3, 63, 70, 71, 99])
     
     def test_write_new_questionaire(self):
         self.surv.write_new_questionaire('DOB_F3_result.csv')

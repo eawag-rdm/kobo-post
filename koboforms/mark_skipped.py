@@ -207,7 +207,7 @@ class Survey(object):
 
     def _check_selected(self, column, val):
         "check whether val in values"
-        return column.map(lambda x: val in x.split()).reset_index(drop=True)
+        return column.map(lambda x: val in x.split())#.reset_index(drop=True)
 
     def get_columnnames(self):
         return self.quest.columns
@@ -250,10 +250,20 @@ class Survey(object):
         assert(all(skip.index == self.quest.index))
         # apply the skipped - marker
         newform = self.quest.copy(deep = True)
+        print(newform.shape)
+        print(self.quest.shape)
         for colname in skip.columns:
-            newform[colname] = newform.where(np.logical_not(skip[colname]),
-                                             other='_SKIPPED_')
+            # print("NOT SKIP")
+            # print(np.logical_not(skip[colname]))
+            # repcol = newform[colname].where(np.logical_not(skip[colname]),
+            #                                 other='_SKIPPED_')
+            # oldcol = newform[colname]
+            # print("OLDCOL:\n{}".format(oldcol))
+            # print("REPCOL:\n{}".format(repcol))
+            newform[colname] = newform[colname].where(np.logical_not(skip[colname]),
+                                                  other='_SKIPPED_')
         # check skipped values where 'n/a' or ''
+        print(type(self.quest))
         isempty = np.logical_or(self.quest == '', self.quest == 'n/a')
         isskipped = newform == '_SKIPPED_'
         assert(all(isskipped == isempty))
