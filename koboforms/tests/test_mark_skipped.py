@@ -43,6 +43,15 @@ class TestFormDef(TestCase):
         self.assertNotIn(15, conds)
         self.assertEqual(len(conds), 248)
 
+    def test__elim_condition_loops(self):
+        self.form = FormDef(os.path.join(datapath, 'Test_Formdef_Loops_Cond.xls'))
+        self.form._elim_condition_loops()
+        self.assertEqual(self.form.form.loc[73, 'relevant'], '')
+        self.assertEqual(self.form.form.loc[74, 'relevant'],
+                         "${Is_the_sludge_that_is_removed_} = 'yes'")
+        lastcond = self.form.form.loc[75, 'relevant'].split(' and ')[-1]
+        self.assertEqual(lastcond, "${Is_the_sludge_that_is_removed_} = 'yes'")
+        
     def test_mk_loopgrouping(self):
         self.form = FormDef(os.path.join(datapath, 'Test_Formdef_Loops.xls'))
         self.surv = Survey(os.path.join(datapath, 'DOB_F3_2017_03_07_08_14_30.xlsx'),
@@ -83,7 +92,6 @@ class TestSurvey(TestCase):
 
     def test_read_workbook(self):
         res = self.surv._read_workbook()
-        print([d.shape for d in res[0].values()])
         self.assertEqual(set([d.shape for d in res[0].values()]),
                          set([(132, 257), (114, 10)]))
         self.assertEqual(res[1], ['uploaded_form_dkhgoz', 'group_vq7sw37'])
@@ -91,10 +99,22 @@ class TestSurvey(TestCase):
     def test__massage_group_tables(self):
         res = self.surv._massage_group_tables()
         self.assertEqual(list(res.keys()), ['group_vq7sw37'])
+        self.assertEqual(res['group_vq7sw37']
+                         .loc[126, ['group_vq7sw37[1]/What_pre_treatment_stages_are',
+	                            'group_vq7sw37[2]/What_pre_treatment_stages_are',
+	                            'group_vq7sw37[3]/What_pre_treatment_stages_are',
+	                            'group_vq7sw37[4]/What_pre_treatment_stages_are',
+	                            'group_vq7sw37[1]/Others_003',
+                                    'group_vq7sw37[2]/Others_003',
+                                    'group_vq7sw37[3]/Others_003',
+                                    'group_vq7sw37[4]/Others_003']].tolist(),
+	                 ['screen_with_ma', 'grit_removal', 'grease_trap_at',
+                          'none', 'Ready made steel screen fixed',
+                          'Civil constructed', 'Civil constructed', ''])
 
     def test_join_main_and_groups(self):
         res = self.surv.quest
-        self.assertEqual(res.shape, (132, 266))
+        self.assertEqual(res.shape, (132, 265))
         self.assertTrue(all([c in res.columns for c in [
             'group_vq7sw37[1]/What_pre_treatment_stages_are',
             'group_vq7sw37[2]/What_pre_treatment_stages_are',

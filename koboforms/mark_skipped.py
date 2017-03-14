@@ -35,11 +35,30 @@ class FormDef(object):
             conds.drop(wrong.index, inplace=True)
         return conds
 
+    def _elim_condition_loops(self):
+        """Puts conditions that are set for loops inside the loop"""
+        idxstart = self.form.loc[self.form['type'] == 'begin repeat', :].index
+        idxend = self.form.loc[self.form['type'] == 'end repeat',:].index
+        # find condition loops
+        condloopsstart = []
+        for i, startidx in enumerate(idxstart):
+            if self.form.loc[startidx, 'relevant'] != '':
+                condloopsstart.append(i)
+        indexranges = [range(a, b) for a, b in zip(idxstart[condloopsstart],
+                                                   idxend[condloopsstart])]
+        for ran in indexranges:
+            condition = self.form.loc[ran[0], 'relevant']
+            self.form.loc[ran[0], 'relevant'] = ''
+            for i in range(ran[0]+1, ran[-1]+1):
+                oldcond = self.form.loc[i, 'relevant']
+                joinlist = [c for c in [oldcond, condition] if c != '']
+                self.form.loc[i, 'relevant'] = ' and '.join(joinlist)
+    
     def mk_loopgrouping(self, survey):
         """Modifies the form description to explicitly define
         columns defines in loops over groups and the respective conditions.
         
-        """ 
+        """
         def get_replacement_rules(groupname, oldrule, colnam, prefixes):
             """Create a sub-dataframe that contains the group specific
             replacement definition/conditions.
@@ -95,7 +114,7 @@ class FormDef(object):
             # replace the old rule - line with new ones
             self.form = self.form.drop(idx)
             self.form =self.form.append(repdf)
-
+        self._elim_condition_loops()
         loopdict, indexdict = collect_loop_info()
         idx_relevant = get_rules_in_loops_by_idx(indexdict)
         for idx in idx_relevant:
@@ -122,16 +141,6 @@ class Survey(object):
         self.surveyname = surveyname
         self.data, self.sheetnames = self._read_workbook()
         self.quest = self.join_main_and_groups()
-        
-        # ftyp = os.path.splitext(surveyname)[1].upper()
-        # if ftyp == '.CSV':
-        #     self.quest = pd.read_csv(surveyname)
-        # elif ftyp in ['.XLS', '.XLSX']:
-        #     self.quest = pd.read_excel(surveyname, na_values=[], keep_default_na=False).applymap(lambda x: str(x))
-        # else:
-        #     raise(Exception('No valid file extension for {}'.format(surveyname)))
-        # self.quest = self._massage_group_tables(
-        #     self._read_workbook(surveyname))
         self.F = FormDef(formname)
         self._repl_na()
 
@@ -142,14 +151,17 @@ class Survey(object):
 
         """
         data = {}
-        with pd.ExcelFile(self.surveyname,
-                          na_values=[],keep_default_na=False) as xls:
+        with pd.ExcelFile(self.surveyname) as xls:
             sheets = xls.sheet_names
-            data['main'] = pd.read_excel(xls, sheets[0], na_values=[],
-                                         keep_default_na=False,
-                                         index_col='_index')
-            data.update(pd.read_excel(xls, sheets[1:], na_values=[],
-                                         keep_default_na=False))
+            data['main'] = pd.read_excel(
+                xls, sheets[0], na_values=[],
+                keep_default_na=False,
+                index_col='_index').applymap(lambda x: str(x))
+            for s in sheets[1:]:
+                data[s] = pd.read_excel(
+                    xls, s, na_values=[],
+                    keep_default_na=False).applymap(lambda x: str(x))
+                data[s]['_parent_index'] = pd.to_numeric(data[s]['_parent_index'])
         return([data, sheets])
 
     def _massage_group_tables(self):
@@ -161,39 +173,42 @@ class Survey(object):
         grouptables = {}
         for d in data:
             # get maximum number of group elements
-            par_idxs = data[d]._parent_index.tolist()
+            par_idxs = [int(i) for i in data[d]._parent_index.tolist()]
             nmax = max([par_idxs.count(x) for x in set(par_idxs)])
-            newdf = pd.DataFrame(index = list(set(par_idxs)))
+            newindices = list(set(par_idxs))
             # add groupcolumns
             groupcols = [c for c in data[d].columns if c[0] != '_']
             gcpairs = [c.split('/') for c in groupcols]
-            for newcol in [d + '[' + str(i) + ']' + '/' + gc[1]
-                           for gc in gcpairs for i in range(1, nmax + 1)]:
-                newdf[newcol] = ''
+            newcols =  [d + '[' + str(i) + ']' + '/' + gc[1]
+                        for gc in gcpairs for i in range(1, nmax + 1)]
+            # new DataFrame
+            newdf = pd.DataFrame(index=newindices, columns=newcols)
             # populate new df
             idxcount = {}
             for i, row in newdf.iterrows():
                 newdict = {}
                 gcount = 0
-                for _, oldrow in data[d].loc[data[d]._parent_index == i,
-                                             groupcols].iterrows():
+                partrows = data[d].loc[data[d]._parent_index == i, groupcols]
+                for _, oldrow in partrows.iterrows():
                     ocpairs = [c.split('/') for c in oldrow[oldrow != ''].index]
                     gcount += 1
                     newdict.update({c[0]+'['+str(gcount)+']/'+c[1]:
                                     oldrow[c[0]+'/'+c[1]] for c in ocpairs})
+    
                 newdf.loc[i] = pd.Series(newdict)
+            newdf = newdf.fillna('')
             grouptables[d] = newdf
         return(grouptables)
 
     def join_main_and_groups(self):
         grouptables = self._massage_group_tables()
         for gname, gtable in grouptables.items():
-            self.data['main'] = pd.merge(self.data['main'],
-                                         gtable,
-                                         left_index=True,
-                                         right_index=True,
-                                         how='outer',
-                                         indicator='_merge_'+gname)
+            self.data['main'] = pd.merge(
+                self.data['main'],
+                gtable,
+                left_index=True,
+                right_index=True,
+                how='outer')
         return(self.data['main'])
             
     def _repl_na(self):
@@ -231,6 +246,8 @@ class Survey(object):
 
         skip = pd.DataFrame()
         for i, row in self.skiprules.iterrows():
+            # print("RELEVANT ROW")
+            # print(row['relevant'])
             skip[row['name']] = eval(row['relevant']).apply(lambda x: not x)
         return(skip)
 
@@ -250,21 +267,13 @@ class Survey(object):
         assert(all(skip.index == self.quest.index))
         # apply the skipped - marker
         newform = self.quest.copy(deep = True)
-        print(newform.shape)
-        print(self.quest.shape)
         for colname in skip.columns:
-            # print("NOT SKIP")
-            # print(np.logical_not(skip[colname]))
-            # repcol = newform[colname].where(np.logical_not(skip[colname]),
-            #                                 other='_SKIPPED_')
-            # oldcol = newform[colname]
-            # print("OLDCOL:\n{}".format(oldcol))
-            # print("REPCOL:\n{}".format(repcol))
-            newform[colname] = newform[colname].where(np.logical_not(skip[colname]),
-                                                  other='_SKIPPED_')
+            repcol = newform[colname].where(np.logical_not(skip[colname]),
+                                            other='_SKIPPED_')
+            newform[colname] = newform[colname].where(
+                np.logical_not(skip[colname]), other='_SKIPPED_')
         # check skipped values where 'n/a' or ''
-        print(type(self.quest))
-        isempty = np.logical_or(self.quest == '', self.quest == 'n/a')
+        isempty = self.quest == ''
         isskipped = newform == '_SKIPPED_'
         assert(all(isskipped == isempty))
         # convert '' to 'NA'
