@@ -3,7 +3,7 @@
 """mark_skipped.py
 
 Usage:
-  mark_skipped.py <questionaire> <form_definition>
+  mark_skipped.py <questionaire> <form_definition> <outpath>
 
 """ 
 
@@ -278,14 +278,17 @@ class Survey(object):
         assert(all(isskipped == isempty))
         # convert '' to 'NA'
         newform.replace(to_replace='', value='NA', inplace=True)
+        newform.fillna(value='NA', inplace=True)
         with open(outpath, 'w') as f:
-            newform.to_csv(f, index=False, line_terminator='\r\n')
+            newform.to_csv(f, index=True, index_label='INDEX',
+                           line_terminator='\r\n')
 
 def main():
     arguments = docopt(__doc__, help=True)
     surv = Survey(arguments['<questionaire>'], arguments['<form_definition>'])
     base, ext = os.path.splitext(arguments['<questionaire>'])
-    outpath = base + '_SKIP' + '.csv'
+    basename = os.path.basename(base)
+    outpath = os.path.join(arguments['<outpath>'], basename + '.csv')
     surv.write_new_questionaire(outpath)
 
 if __name__ == '__main__':
