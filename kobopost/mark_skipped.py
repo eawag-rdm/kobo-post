@@ -12,8 +12,8 @@ import numpy as np
 import re
 import os
 import logging
-from parser import XLSFormParser
-from parser import XLSFormLexer
+from .parser import XLSFormParser
+from .parser import XLSFormLexer
 
 logger = logging.getLogger(__name__)
 

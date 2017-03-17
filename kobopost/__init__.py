@@ -1,2 +1,2 @@
-from mark_skipped import main
+from .mark_skipped import main
 main()
