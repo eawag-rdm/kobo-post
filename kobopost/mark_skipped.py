@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # _*_ coding: utf-8 _*_
-"""mark_skipped.py
+"""Usage: mark_skipped.py <questionaire> <form_definition> <outpath>
 
-Usage:
-  mark_skipped.py <questionaire> <form_definition> <outpath>
+Processes <questionaire>, an xlsx-file, based on <form_definition>, an xls file
+and writes the output to an apropriately named file in <outpath>
 
 """ 
-
 from docopt import docopt
 import pandas as pd
 import numpy as np
@@ -22,7 +21,8 @@ class FormDef(object):
     """Represents a KoBoToolbox - form definition"""
 
     def __init__(self, formname):
-        self.form = pd.read_excel(formname, na_values=None, keep_default_na=[]).applymap(lambda x: str(x))
+        self.form = pd.read_excel(formname, na_values=None,
+                                  keep_default_na=[]).applymap(lambda x: str(x))
         self.P = XLSFormParser()
         self.L = XLSFormLexer()
         self.prefixpat = r'(group_\S+\[\d+\]/)'
@@ -31,7 +31,8 @@ class FormDef(object):
         "check for empty strings in 'name' - column"
         wrong = conds[conds.name == '']
         if not wrong.empty:
-            logger.warn('bad columnname in "name":\n{}\n--> dropping'.format(wrong))
+            logger.warn('bad columnname in "name":\n{}\n--> dropping'
+                        .format(wrong))
             conds.drop(wrong.index, inplace=True)
         return conds
 

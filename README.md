@@ -23,7 +23,7 @@ and writes the output to an appropriately named file in \<outpath\>.
 
 + Questions that were identified as "skipped" by the form-definition have the value **`_SKIPPED_`**.
 + Other questions with "empty" content get the value **`NA`**, as this is the most common and least problematic way to represent missing values (see [Jonathan Callahan's treatise](http://mazamascience.com/WorkingWithData/?p=343)).
-+ The output-file is an [RFC4180](https://www.ietf.org/rfc/rfc4180.txt) conforming CSV file, with comma as field separator and `\r\n` as line-ending.
++ The output-file is an [RFC4180](https://www.ietf.org/rfc/rfc4180.txt) conforming CSV file, UTF-8 encoded, with comma as field separator and `\r\n` as line-ending.
 + "Group questions" have column header `group_<XXXXX>[<i>]/<question>`, where `<XXXXX>` is the group descriptor, `<i>` is the loop iteration and `<question>` is the question descriptor.
 
 ## Installation
