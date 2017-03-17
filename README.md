@@ -6,7 +6,7 @@ Package to post-process surveys that were created with [kobotoolbox](http://www.
 
 Currently this provides one command line script: **`mark_skipped`**.
 
-Kobotoolbox provides applications and a platform to design and apply surveys. Among other features, kobotoolbox allows conditional questions, that is questions that are skipped if a condition (usually referring to previous questions) is not met. Also **`kobopost`** allows to create groups of questions, which, among other uses, can be repeated in a loop.**`kobopost`** addresses two shortcomings:
+Kobotoolbox provides applications and a platform to design and apply surveys. Among other features, kobotoolbox allows conditional questions, that is questions that are skipped if a condition (usually referring to previous questions) is not met. Also Kobotoolbox allows to create groups of questions, which, among other uses, can be repeated in a loop.**`kobopost`** addresses two shortcomings:
 
 1. Conditional questions that were skipped are indistinguishable from questions that were asked but did not get an answer. This is very unsatisfying when it comes to analysis.
 
