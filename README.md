@@ -13,7 +13,6 @@ Kobotoolbox provides applications and a platform to design and apply surveys. Am
 2. Grouped questions of a survey are recorded in different worksheets from the other questions in the resulting workbook. Combining them can be a non-trivial business.
 
 ## Usage
-Usage:
 
 ```
 mark_skipped.py [options] <questionaire> <form_definition> <outpath>
@@ -22,7 +21,7 @@ Options:
 --na=<na_marker> [default: NA]
 
 Processes <questionaire>, an xlsx-file, based on <form_definition>, an xls file
-and writes the output to an apropriately named file in <outpath>
+and writes the output to an apropriately named file in <outpath>.
 ```
 
 ## Output
