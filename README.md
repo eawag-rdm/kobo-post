@@ -40,7 +40,7 @@ and writes the output to an appropriately named file in \<outpath\>.
 
 ## Caveats
 
-+ The form definition language ([XLSForm](http://xlsform.org/)) seems quite powerful. Not all features are likely implemented because the documentation for XLSForm is incomplete. If you run into such a problem please raise an [Issue](https://github.com/eawag-rdm/koboforms/issues), I'll likely be able to fix that.
++ The form definition language ([XLSForm](http://xlsform.org/)) seems quite powerful. Not all features are likely implemented. If you run into such a problem please raise an [Issue](https://github.com/eawag-rdm/koboforms/issues), I'll likely be able to fix that.
 
 ## Developers
 
