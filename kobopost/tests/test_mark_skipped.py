@@ -1,7 +1,7 @@
 #_*_ coding: utf-8 _*_
 
 from unittest import TestCase
-from mark_skipped import FormDef, Survey
+from kobopost.mark_skipped import FormDef, Survey
 import os
 import sys
 import pandas as pd
@@ -38,7 +38,7 @@ class TestFormDef(TestCase):
      
     def test__check_colnames(self):
         conds = self.form.form.loc[:,('name', 'relevant')]
-        with self.assertLogs(level='WARN'):
+        with self.assertLogs(level='WARNING'):
             conds = self.form._check_colnames(conds)
         self.assertNotIn(15, conds)
         self.assertEqual(len(conds), 248)
@@ -143,6 +143,6 @@ class TestSurvey(TestCase):
                          [3, 63, 70, 71, 99])
     
     def test_write_new_questionaire(self):
-        self.surv.write_new_questionaire('DOB_F3_result.csv')
+        self.surv.write_new_questionaire('DOB_F3_result.csv', 'NA')
 
     

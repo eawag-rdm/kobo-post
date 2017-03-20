@@ -1,6 +1,10 @@
-#!/usr/bin/env python3
 # _*_ coding: utf-8 _*_
-"""Usage: mark_skipped.py <questionaire> <form_definition> <outpath>
+
+"""Usage:
+mark_skipped.py [options] <questionaire> <form_definition> <outpath>
+
+Options:
+--na=<na_marker> [default: NA]
 
 Processes <questionaire>, an xlsx-file, based on <form_definition>, an xls file
 and writes the output to an apropriately named file in <outpath>
@@ -31,7 +35,7 @@ class FormDef(object):
         "check for empty strings in 'name' - column"
         wrong = conds[conds.name == '']
         if not wrong.empty:
-            logger.warn('bad columnname in "name":\n{}\n--> dropping'
+            logger.warning('bad columnname in "name":\n{}\n--> dropping'
                         .format(wrong))
             conds.drop(wrong.index, inplace=True)
         return conds
@@ -252,7 +256,9 @@ class Survey(object):
             skip[row['name']] = eval(row['relevant']).apply(lambda x: not x)
         return(skip)
 
-    def write_new_questionaire(self, outpath):
+    def write_new_questionaire(self, outpath, na_marker):
+        if not na_marker:
+            na_marker='NA'
         skip = self.eval_skiprules()
         # same axis-0 count?
         assert(skip.shape[0] == self.quest.shape[0])
@@ -278,8 +284,8 @@ class Survey(object):
         isskipped = newform == '_SKIPPED_'
         assert(all(isskipped == isempty))
         # convert '' to 'NA'
-        newform.replace(to_replace='', value='NA', inplace=True)
-        newform.fillna(value='NA', inplace=True)
+        newform.replace(to_replace='', value=na_marker, inplace=True)
+        newform.fillna(value=na_marker, inplace=True)
         with open(outpath, 'w') as f:
             newform.to_csv(f, index=True, index_label='INDEX',
                            line_terminator='\r\n')
@@ -290,11 +296,14 @@ def main():
     base, ext = os.path.splitext(arguments['<questionaire>'])
     basename = os.path.basename(base)
     outpath = os.path.join(arguments['<outpath>'], basename + '.csv')
-    surv.write_new_questionaire(outpath)
+    na_marker = arguments['--na']
+    surv.write_new_questionaire(outpath, na_marker)
 
 if __name__ == '__main__':
     main()
-        
+
+
+       
 
         
 

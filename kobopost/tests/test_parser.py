@@ -3,7 +3,7 @@
 from unittest import TestCase
 from ply.lex import LexError
 from ply.yacc import GrammarError
-from parser import XLSFormLexer, XLSFormParser
+from kobopost.parser import XLSFormLexer, XLSFormParser
 
 class TestParser(TestCase):
 
