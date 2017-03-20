@@ -15,7 +15,7 @@ Kobotoolbox provides applications and a platform to design and apply surveys. Am
 ## Usage
 
 ```
-mark_skipped.py [options] <questionaire> <form_definition> <outpath>
+mark_skipped [options] <questionaire> <form_definition> <outpath>
 
 Options:
 --na=<na_marker> [default: NA]
