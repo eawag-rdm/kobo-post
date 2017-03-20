@@ -3,11 +3,12 @@
 """Usage:
 mark_skipped [options] <questionaire> <form_definition> <outpath>
 
-Options:
---na=<na_marker> [default: NA]
-
 Processes <questionaire>, an xlsx-file, based on <form_definition>, an xls file
 and writes the output to an apropriately named file in <outpath>
+
+Options:
+--na=<na_marker>   The string empty cells are replaced with [default: NA].
+--format=<output_format>  Recognized formats are "XLSX" and "CSV" [default: CSV].
 
 """ 
 from docopt import docopt
@@ -15,6 +16,7 @@ import pandas as pd
 import numpy as np
 import re
 import os
+import sys
 import logging
 from .parser import XLSFormParser
 from .parser import XLSFormLexer
@@ -286,17 +288,26 @@ class Survey(object):
         # convert '' to 'NA'
         newform.replace(to_replace='', value=na_marker, inplace=True)
         newform.fillna(value=na_marker, inplace=True)
-        with open(outpath, 'w') as f:
-            newform.to_csv(f, index=True, index_label='INDEX',
-                           line_terminator='\r\n')
+        ext = os.path.splitext(outpath)[1]
+        if ext == '.csv':
+            with open(outpath, 'w') as f:
+                newform.to_csv(f, index=True, index_label='INDEX',
+                               line_terminator='\r\n')
+            
+        elif ext == '.xlsx':
+            newform.to_excel(outpath, index=True, sheet_name="Sheet1", index_label='INDEX')
+                
 
 def main():
     arguments = docopt(__doc__, help=True)
     surv = Survey(arguments['<questionaire>'], arguments['<form_definition>'])
     base, ext = os.path.splitext(arguments['<questionaire>'])
     basename = os.path.basename(base)
-    outpath = os.path.join(arguments['<outpath>'], basename + '.csv')
+    out_format = arguments['--format']
+    extension = out_format.lower()
+    outpath = os.path.join(arguments['<outpath>'], basename + '.' + extension)
     na_marker = arguments['--na']
+    
     surv.write_new_questionaire(outpath, na_marker)
 
 if __name__ == '__main__':

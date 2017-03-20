@@ -17,11 +17,12 @@ Kobotoolbox provides applications and a platform to design and apply surveys. Am
 ```
 mark_skipped [options] <questionaire> <form_definition> <outpath>
 
-Options:
---na=<na_marker> [default: NA]
-
 Processes <questionaire>, an xlsx-file, based on <form_definition>, an xls file
-and writes the output to an apropriately named file in <outpath>.
+and writes the output to an apropriately named file in <outpath>
+
+Options:
+--na=<na_marker>   The string empty cells are replaced with [default: NA].
+--format=<output_format>  Recognized formats are "XLSX" and "CSV" [default: CSV].
 ```
 
 ## Output
