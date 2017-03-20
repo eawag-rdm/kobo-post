@@ -1,7 +1,7 @@
 # _*_ coding: utf-8 _*_
 
 """Usage:
-mark_skipped.py [options] <questionaire> <form_definition> <outpath>
+mark_skipped [options] <questionaire> <form_definition> <outpath>
 
 Options:
 --na=<na_marker> [default: NA]
