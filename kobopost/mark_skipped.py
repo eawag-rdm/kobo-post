@@ -7,8 +7,9 @@ Processes <questionaire>, an xlsx-file, based on <form_definition>, an xls file
 and writes the output to an apropriately named file in <outpath>
 
 Options:
---na=<na_marker>   The string empty cells are replaced with [default: NA].
+--na=<na_marker>          The string empty cells are replaced with [default: NA].
 --format=<output_format>  Recognized formats are "XLSX" and "CSV" [default: CSV].
+--fullquestions           Write a second header row that contains the full questions ("labels").
 
 """ 
 from docopt import docopt
@@ -253,14 +254,24 @@ class Survey(object):
 
         skip = pd.DataFrame()
         for i, row in self.skiprules.iterrows():
-            # print("RELEVANT ROW")
-            # print(row['relevant'])
             skip[row['name']] = eval(row['relevant']).apply(lambda x: not x)
         return(skip)
 
-    def write_new_questionaire(self, outpath, na_marker):
-        if not na_marker:
-            na_marker='NA'
+    def _insert_question_row(self, form):
+        """Inserts a second header row that contains the
+        full questions ("labels")
+
+        """
+        mapdict = {i[1]['name']: i[1]['label']
+               for i in self.F.form.loc[:,['name','label']].iterrows()}
+        newrow = list(form.columns)
+        newrow = [mapdict.get(x, '') for x in newrow]
+        form.loc[0] = newrow
+        form.sort_index(inplace=True)
+        return form
+
+    def _mk_final_table(self, na_marker):
+        """Creates final table"""
         skip = self.eval_skiprules()
         # same axis-0 count?
         assert(skip.shape[0] == self.quest.shape[0])
@@ -288,6 +299,12 @@ class Survey(object):
         # convert '' to 'NA'
         newform.replace(to_replace='', value=na_marker, inplace=True)
         newform.fillna(value=na_marker, inplace=True)
+        return newform
+    
+    def write_new_questionaire(self, outpath, na_marker, fullquestions):
+        newform = self._mk_final_table(na_marker)
+        if fullquestions:
+            newform = self._insert_question_row(newform)
         ext = os.path.splitext(outpath)[1]
         if ext == '.csv':
             with open(outpath, 'w') as f:
@@ -295,7 +312,11 @@ class Survey(object):
                                line_terminator='\r\n')
             
         elif ext == '.xlsx':
-            newform.to_excel(outpath, index=True, sheet_name="Sheet1", index_label='INDEX')
+            newform.to_excel(outpath, index=True, sheet_name="Sheet1",
+                             index_label='INDEX')
+        else:
+            raise NotImplementedError('Output format "{}" not recognized.'
+                                      .format(ext[1:].upper()))
                 
 
 def main():
@@ -307,8 +328,9 @@ def main():
     extension = out_format.lower()
     outpath = os.path.join(arguments['<outpath>'], basename + '.' + extension)
     na_marker = arguments['--na']
+    fullquestions = arguments['--fullquestions']
     
-    surv.write_new_questionaire(outpath, na_marker)
+    surv.write_new_questionaire(outpath, na_marker, fullquestions)
 
 if __name__ == '__main__':
     main()

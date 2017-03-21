@@ -143,6 +143,13 @@ class TestSurvey(TestCase):
                          [3, 63, 70, 71, 99])
     
     def test_write_new_questionaire(self):
-        self.surv.write_new_questionaire('DOB_F3_result.csv', 'NA')
+        self.surv.write_new_questionaire('DOB_F3_result.csv', 'NA', False)
+
+    def test__insert_question_row(self):
+        form = self.surv._mk_final_table('NA')
+        res = self.surv._insert_question_row(form)
+        qf = list(self.form.form['label'])
+        self.assertTrue(all([q in qf for q in res.loc[0,:] if q != '']))
+
 
     
