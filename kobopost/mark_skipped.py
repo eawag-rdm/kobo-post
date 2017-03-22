@@ -10,6 +10,7 @@ Options:
 --na=<na_marker>          The string empty cells are replaced with [default: NA].
 --format=<output_format>  Recognized formats are "XLSX" and "CSV" [default: CSV].
 --fullquestions           Write a second header row that contains the full questions ("labels").
+--keepnotes               Do not delete columns that represent "notes" instead of questions.
 
 """ 
 from docopt import docopt
@@ -145,11 +146,13 @@ class Survey(object):
 
     """
 
-    def __init__(self, surveyname, formname):
-        self.surveyname = surveyname
+    def __init__(self, arguments):
+        self.arguments = arguments
+        self.surveyname = arguments['<questionaire>']
         self.data, self.sheetnames = self._read_workbook()
         self.quest = self.join_main_and_groups()
-        self.F = FormDef(formname)
+        self.F = FormDef(arguments['<form_definition>'])
+
         self._repl_na()
 
     def _read_workbook(self):
@@ -270,8 +273,21 @@ class Survey(object):
         form.sort_index(inplace=True)
         return form
 
-    def _mk_final_table(self, na_marker):
+    def _handle_notes(self, form):
+        newform = form.copy(deep=True)
+        # Column names that are "notes"
+        notenames = self.F.form.loc[self.F.form['type'] == 'note', 'name']
+        # check whether empty
+        assert((self.quest.loc[:, notenames].values == '').all())
+        if self.arguments['--keepnotes']:
+            newform.loc[:, notenames] = '_NOTE_'
+        else:
+            newform.drop(notenames, axis=1, inplace=True)
+        return newform
+
+    def _mk_final_table(self):
         """Creates final table"""
+        na_marker = self.arguments['--na']
         skip = self.eval_skiprules()
         # same axis-0 count?
         assert(skip.shape[0] == self.quest.shape[0])
@@ -296,14 +312,21 @@ class Survey(object):
         isempty = self.quest == ''
         isskipped = newform == '_SKIPPED_'
         assert(all(isskipped == isempty))
+        # Handle columns representing "notes"
+        newform = self._handle_notes(newform)
         # convert '' to 'NA'
         newform.replace(to_replace='', value=na_marker, inplace=True)
         newform.fillna(value=na_marker, inplace=True)
         return newform
     
-    def write_new_questionaire(self, outpath, na_marker, fullquestions):
-        newform = self._mk_final_table(na_marker)
-        if fullquestions:
+    def write_new_questionaire(self):
+        base = os.path.splitext(self.arguments['<questionaire>'])[0]
+        basename = os.path.basename(base)
+        extension = self.arguments['--format'].lower()
+        outpath = os.path.join(self.arguments['<outpath>'], basename + '.' + extension)
+
+        newform = self._mk_final_table()
+        if self.arguments['--fullquestions']:
             newform = self._insert_question_row(newform)
         ext = os.path.splitext(outpath)[1]
         if ext == '.csv':
@@ -320,24 +343,14 @@ class Survey(object):
                 
 
 def main():
-    arguments = docopt(__doc__, help=True)
-    surv = Survey(arguments['<questionaire>'], arguments['<form_definition>'])
-    base, ext = os.path.splitext(arguments['<questionaire>'])
-    basename = os.path.basename(base)
-    out_format = arguments['--format']
-    extension = out_format.lower()
-    outpath = os.path.join(arguments['<outpath>'], basename + '.' + extension)
-    na_marker = arguments['--na']
-    fullquestions = arguments['--fullquestions']
-    
-    surv.write_new_questionaire(outpath, na_marker, fullquestions)
+    arguments = docopt(__doc__, help=True) 
+    surv = Survey(arguments)
+    surv.write_new_questionaire()
 
 if __name__ == '__main__':
     main()
 
 
        
-
-        
 
         

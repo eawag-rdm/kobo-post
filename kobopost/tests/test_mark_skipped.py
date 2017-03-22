@@ -6,6 +6,7 @@ import os
 import sys
 import pandas as pd
 import numpy as np
+import inspect
 
 
 pd.options.display.max_colwidth = 200
@@ -16,9 +17,10 @@ datapath = os.path.join(os.path.split(modpath)[0], 'data')
 class TestFormDef(TestCase):
 
     def setUp(self):
+        self.arguments = {'<questionaire>': os.path.join(datapath, 'DOB_F3_2017_03_07_08_14_30.xlsx'),
+                     '<form_definition>': os.path.join(datapath, 'DOB_F3.xls')}
         self.form = FormDef(os.path.join(datapath, 'DOB_F3.xls'))
-        self.surv = Survey(os.path.join(datapath, 'DOB_F3_2017_03_07_08_14_30.xlsx'),
-                           os.path.join(datapath, 'DOB_F3.xls'))
+        self.surv = Survey(self.arguments)
         print('')
 
     def test_read_skipconditions(self):
@@ -54,8 +56,9 @@ class TestFormDef(TestCase):
         
     def test_mk_loopgrouping(self):
         self.form = FormDef(os.path.join(datapath, 'Test_Formdef_Loops.xls'))
-        self.surv = Survey(os.path.join(datapath, 'DOB_F3_2017_03_07_08_14_30.xlsx'),
-                           os.path.join(datapath, 'Test_Formdef_Loops.xls'))
+        arguments = self.arguments
+        arguments.update({'<form_definition>': os.path.join(datapath, 'Test_Formdef_Loops.xls')})
+        self.surv = Survey(arguments)
         self.form.mk_loopgrouping(self.surv)
         l = self.form.form.loc[5, ['name', 'relevant']].values
         expect = np.array([['group_vq7sw37[1]/Others_003',
@@ -85,9 +88,14 @@ class TestFormDef(TestCase):
 class TestSurvey(TestCase):
     
     def setUp(self):
+        self.arguments = {'<questionaire>': os.path.join(datapath, 'DOB_F3_2017_03_07_08_14_30.xlsx'),
+                          '<form_definition>': os.path.join(datapath, 'DOB_F3.xls'),
+                          '--na': 'NA',
+                          '--fullquestions': False,
+                          '--format': 'CSV',
+                          '--keepnotes': False}
         self.form = FormDef(os.path.join(datapath, 'DOB_F3.xls'))
-        self.surv = Survey(os.path.join(datapath, 'DOB_F3_2017_03_07_08_14_30.xlsx'),
-                           os.path.join(datapath, 'DOB_F3.xls'))
+        self.surv = Survey(self.arguments)
         print('')
 
     def test_read_workbook(self):
@@ -143,13 +151,60 @@ class TestSurvey(TestCase):
                          [3, 63, 70, 71, 99])
     
     def test_write_new_questionaire(self):
-        self.surv.write_new_questionaire('DOB_F3_result.csv', 'NA', False)
+        outpath = os.path.join(os.path.split(
+            os.path.dirname(inspect.getfile(Survey)))[0], 'results')
+        self.arguments.update({'<outpath>': outpath})
+        self.surv.write_new_questionaire()
 
     def test__insert_question_row(self):
-        form = self.surv._mk_final_table('NA')
+        form = self.surv._mk_final_table()
         res = self.surv._insert_question_row(form)
         qf = list(self.form.form['label'])
         self.assertTrue(all([q in qf for q in res.loc[0,:] if q != '']))
+
+    def test__handle_notes(self):
+       
+
+        res = self.surv._handle_notes(self.surv.quest)
+        self.surv.F.form.loc[
+            self.surv.F.form['name'] =='Project_code', 'type'] = 'note'
+        self.assertRaises(AssertionError,
+            self.surv._handle_notes, self.surv.quest)
+        self.surv.F.form.loc[
+            self.surv.F.form['name'] =='Project_code', 'type'] = 'text'
+        res = self.surv._handle_notes(self.surv.quest)
+        notenames = ['Please_note_This_form_is_not_',
+                     '_1_Site_appearance',
+                     'Primary_secondary_and_tertiar',
+                     'Appearance_of_primary_settlers',
+                     'Appearance_of_anaerobic_digest',
+                     'Appearance_of_anaerobic_baffle',
+                     'Appearance_of_Upflow_Anaerobic',
+                     'Appearance_of_constructed_wetl',
+                     'Appearance_of_trickling_filter',
+                     'Appearance_of_activated_sludge',
+                     'Appearance_of_Moving_Bed_Biofi',
+                     'Appearance_of_Rotating_Biologi',
+                     'Appearance_of_Membrane_Bioreac',
+                     'Appearance_of_secondary_settle',
+                     'Appearance_of_pond_systems_e_',
+                     'Appearance_of_aerators',
+                     'Appearance_of_chlorination',
+                     'Appearance_of_pumps',
+                     'Appearance_of_sludge_drying_be_001',
+                     'Site_appearance',
+                     'Design_related_aspects',
+                     '_2_Infrastructure_condition',
+                     '_3_Operational_aspects',
+                     '_4_Wastewater_and_sludge_chara',
+                     'Photo_checklist',
+                     'Interviewer_s_notes_and_feedba']
+        self.assertTrue(all([not c in res.columns for c in notenames])) 
+        self.surv.arguments['--keepnotes'] = True
+        res = self.surv._handle_notes(self.surv.quest)
+        self.assertTrue((res.loc[:, notenames].values == '_NOTE_').all())
+        
+        
 
 
     
