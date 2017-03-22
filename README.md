@@ -24,14 +24,33 @@ Options:
 --na=<na_marker>          The string empty cells are replaced with [default: NA].
 --format=<output_format>  Recognized formats are "XLSX" and "CSV" [default: CSV].
 --fullquestions           Write a second header row that contains the full questions ("labels").
+--keepnotes               Do not delete columns that represent "notes" instead of questions.
 ```
 
 ## Output
 
-+ Questions that were identified as "skipped" by the form-definition have the value **`_SKIPPED_`**.
-+ Other questions with "empty" content get the value **`NA`**, as this is the most common and least problematic way to represent missing values (see [Jonathan Callahan's treatise](http://mazamascience.com/WorkingWithData/?p=343)).
-+ The output-file is an [RFC4180](https://www.ietf.org/rfc/rfc4180.txt) conforming CSV file, UTF-8 encoded, with comma as field separator and `\r\n` as line-ending.
-+ "Group questions" have column header `group_<XXXXX>[<i>]/<question>`, where `<XXXXX>` is the group descriptor, `<i>` is the loop iteration and `<question>` is the question descriptor.
++ Questions that were identified as "skipped" by the form-definition
+  have the value **`_SKIPPED_`**.
++ Other questions with "empty" content get the value **`NA`** (unless
+  changed with option `--na`), as this is the most common and least
+  problematic way to represent missing values (see
+  [Jonathan Callahan's treatise](http://mazamascience.com/WorkingWithData/?p=343)).
++ The output-file is an
+  [RFC4180](https://www.ietf.org/rfc/rfc4180.txt) conforming CSV file,
+  UTF-8 encoded, with comma as field separator and `\r\n` as
+  line-ending, unless `--format=XLSX` is set, in which case some
+  unspecified variant of
+  [Offic Open XML](https://en.wikipedia.org/wiki/Office_Open_XML) is
+  writen, which we hope can be read by your MS Excel version du
+  jour. This option is provided because MS Excel has problems to read
+  standard-compliant CSV files.
++ "Group questions" have column header
+  `group_<XXXXX>[<i>]/<question>`, where `<XXXXX>` is the group
+  descriptor, `<i>` is the loop iteration and `<question>` is the
+  question descriptor.
++ Columns that are marked as "notes" in the form definition are
+  dropped (after checking that they don't contain non-empty cells),
+  unless option `--keepnotes` is set.
 
 ## Installation
 
