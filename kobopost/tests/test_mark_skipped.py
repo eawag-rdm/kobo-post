@@ -203,6 +203,10 @@ class TestSurvey(TestCase):
         self.surv.arguments['--keepnotes'] = True
         res = self.surv._handle_notes(self.surv.quest)
         self.assertTrue((res.loc[:, notenames].values == '_NOTE_').all())
+
+    def test__re_sort_columns(self):
+        res = self.surv._re_sort_columns(self.surv.quest)
+        print(res)
         
         
 

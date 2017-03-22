@@ -320,7 +320,30 @@ class Survey(object):
         newform.replace(to_replace='', value=na_marker, inplace=True)
         newform.fillna(value=na_marker, inplace=True)
         return newform
-    
+
+    def _re_sort_columns(self, form):
+        """Puts "group"-columns into the position they appear in the form
+        definition.
+        
+        """
+        newform = form.copy(deep=True)
+        def_names = self.F.form.loc[:, 'name']
+        cols = form.columns
+        groupcols = [re.match(r'group_.*/(.*)', c) for c in cols]
+        groupnames = [gc.groups()[0] for gc in groupcols if gc]
+        groupnames = list(set(groupnames))
+        cols = [c[0] for c in zip(cols, groupcols) if not c[1]] + groupnames
+        # remove columns from form-definition that are not in survey
+        def_names_clean = [d for d in def_names if d in cols]
+        print("NAMES CLEAN LEN: {}".format(len(def_names_clean)))
+        print("COLUMNS LEN {}".format(len(cols)))
+        print("All def_names_clean in columns? {}"
+              .format(set(def_names_clean) <= set(cols)))
+        print("cols not in defnames: {}".format(set(cols) - set(def_names_clean)))
+        def_name_pos_in_col = [cols.index(dn) for dn in def_names_clean]
+        return (def_names_clean) 
+
+        
     def write_new_questionaire(self):
         base = os.path.splitext(self.arguments['<questionaire>'])[0]
         basename = os.path.basename(base)
