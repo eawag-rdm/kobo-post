@@ -31,7 +31,7 @@ setup(
     ],
     keywords='kobotoolbox csv post-processing',
     packages=['kobopost'],
-    install_requires=['docopt', 'pandas', 'xlrd', 'ply'],
+    install_requires=['docopt', 'pandas', 'xlrd', 'ply', 'openpyxl'],
     entry_points={
         'console_scripts': ['mark_skipped=kobopost.mark_skipped:main']
     },
