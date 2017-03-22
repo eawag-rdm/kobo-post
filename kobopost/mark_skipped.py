@@ -2,11 +2,13 @@
 
 """Usage:
 mark_skipped [options] <questionaire> <form_definition> <outpath>
+mark_skipped (-h | --help)
 
-Processes <questionaire>, an xlsx-file, based on <form_definition>, an xls file
+Processes <questionaire>, an xlsx-file, based on <form_definition>, an xls file,
 and writes the output to an apropriately named file in <outpath>
 
 Options:
+-h --help                 This help.
 --na=<na_marker>          The string empty cells are replaced with [default: NA].
 --format=<output_format>  Recognized formats are "XLSX" and "CSV" [default: CSV].
 --fullquestions           Write a second header row that contains the full questions ("labels").
