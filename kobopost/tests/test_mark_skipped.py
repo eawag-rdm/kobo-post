@@ -16,9 +16,10 @@ datapath = os.path.join(os.path.split(modpath)[0], 'data')
 class TestFormDef(TestCase):
 
     def setUp(self):
+        self.arguments = {'<questionaire>': os.path.join(datapath, 'DOB_F3_2017_03_07_08_14_30.xlsx'),
+                     '<form_definition>': os.path.join(datapath, 'DOB_F3.xls')}
         self.form = FormDef(os.path.join(datapath, 'DOB_F3.xls'))
-        self.surv = Survey(os.path.join(datapath, 'DOB_F3_2017_03_07_08_14_30.xlsx'),
-                           os.path.join(datapath, 'DOB_F3.xls'))
+        self.surv = Survey(self.arguments)
         print('')
 
     def test_read_skipconditions(self):
@@ -54,8 +55,9 @@ class TestFormDef(TestCase):
         
     def test_mk_loopgrouping(self):
         self.form = FormDef(os.path.join(datapath, 'Test_Formdef_Loops.xls'))
-        self.surv = Survey(os.path.join(datapath, 'DOB_F3_2017_03_07_08_14_30.xlsx'),
-                           os.path.join(datapath, 'Test_Formdef_Loops.xls'))
+        arguments = self.arguments
+        arguments.update({'<form_definition>': os.path.join(datapath, 'Test_Formdef_Loops.xls')})
+        self.surv = Survey(arguments)
         self.form.mk_loopgrouping(self.surv)
         l = self.form.form.loc[5, ['name', 'relevant']].values
         expect = np.array([['group_vq7sw37[1]/Others_003',
@@ -85,9 +87,13 @@ class TestFormDef(TestCase):
 class TestSurvey(TestCase):
     
     def setUp(self):
+        self.arguments = {'<questionaire>': os.path.join(datapath, 'DOB_F3_2017_03_07_08_14_30.xlsx'),
+                          '<form_definition>': os.path.join(datapath, 'DOB_F3.xls'),
+                          '--na': 'NA',
+                          '--fullquestions': False,
+                          '--format': 'CSV'}
         self.form = FormDef(os.path.join(datapath, 'DOB_F3.xls'))
-        self.surv = Survey(os.path.join(datapath, 'DOB_F3_2017_03_07_08_14_30.xlsx'),
-                           os.path.join(datapath, 'DOB_F3.xls'))
+        self.surv = Survey(self.arguments)
         print('')
 
     def test_read_workbook(self):
@@ -143,10 +149,12 @@ class TestSurvey(TestCase):
                          [3, 63, 70, 71, 99])
     
     def test_write_new_questionaire(self):
-        self.surv.write_new_questionaire('DOB_F3_result.csv', 'NA', False)
+        arguments = self.arguments
+        arguments.update({'<outpath>': '../results'})
+        self.surv.write_new_questionaire()
 
     def test__insert_question_row(self):
-        form = self.surv._mk_final_table('NA')
+        form = self.surv._mk_final_table()
         res = self.surv._insert_question_row(form)
         qf = list(self.form.form['label'])
         self.assertTrue(all([q in qf for q in res.loc[0,:] if q != '']))
