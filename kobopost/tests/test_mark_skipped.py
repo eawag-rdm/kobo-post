@@ -6,6 +6,7 @@ import os
 import sys
 import pandas as pd
 import numpy as np
+import inspect
 
 
 pd.options.display.max_colwidth = 200
@@ -149,8 +150,9 @@ class TestSurvey(TestCase):
                          [3, 63, 70, 71, 99])
     
     def test_write_new_questionaire(self):
-        arguments = self.arguments
-        arguments.update({'<outpath>': '../results'})
+        outpath = os.path.join(os.path.split(
+            os.path.dirname(inspect.getfile(Survey)))[0], 'results')
+        self.arguments.update({'<outpath>': outpath})
         self.surv.write_new_questionaire()
 
     def test__insert_question_row(self):

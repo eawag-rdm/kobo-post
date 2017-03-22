@@ -337,8 +337,7 @@ class Survey(object):
 def main():
     arguments = docopt(__doc__, help=True) 
     surv = Survey(arguments)
-
-    surv.write_new_questionaire(outpath)
+    surv.write_new_questionaire()
 
 if __name__ == '__main__':
     main()
