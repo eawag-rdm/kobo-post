@@ -274,8 +274,16 @@ class Survey(object):
         return form
 
     def _handle_notes(self, form):
-        pass
-        
+        newform = form.copy(deep=True)
+        # Column names that are "notes"
+        notenames = self.F.form.loc[self.F.form['type'] == 'note', 'name']
+        # check whether empty
+        assert((self.quest.loc[:, notenames].values == '').all())
+        if self.arguments['--keepnotes']:
+            newform.loc[:, notenames] = '_NOTE_'
+        else:
+            newform.drop(notenames, axis=1, inplace=True)
+        return newform
 
     def _mk_final_table(self):
         """Creates final table"""
@@ -305,7 +313,7 @@ class Survey(object):
         isskipped = newform == '_SKIPPED_'
         assert(all(isskipped == isempty))
         # Handle columns representing "notes"
-        
+        newform = self._handle_notes(newform)
         # convert '' to 'NA'
         newform.replace(to_replace='', value=na_marker, inplace=True)
         newform.fillna(value=na_marker, inplace=True)

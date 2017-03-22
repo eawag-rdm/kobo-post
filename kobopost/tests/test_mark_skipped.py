@@ -92,7 +92,8 @@ class TestSurvey(TestCase):
                           '<form_definition>': os.path.join(datapath, 'DOB_F3.xls'),
                           '--na': 'NA',
                           '--fullquestions': False,
-                          '--format': 'CSV'}
+                          '--format': 'CSV',
+                          '--keepnotes': False}
         self.form = FormDef(os.path.join(datapath, 'DOB_F3.xls'))
         self.surv = Survey(self.arguments)
         print('')
@@ -160,6 +161,50 @@ class TestSurvey(TestCase):
         res = self.surv._insert_question_row(form)
         qf = list(self.form.form['label'])
         self.assertTrue(all([q in qf for q in res.loc[0,:] if q != '']))
+
+    def test__handle_notes(self):
+       
+
+        res = self.surv._handle_notes(self.surv.quest)
+        self.surv.F.form.loc[
+            self.surv.F.form['name'] =='Project_code', 'type'] = 'note'
+        self.assertRaises(AssertionError,
+            self.surv._handle_notes, self.surv.quest)
+        self.surv.F.form.loc[
+            self.surv.F.form['name'] =='Project_code', 'type'] = 'text'
+        res = self.surv._handle_notes(self.surv.quest)
+        notenames = ['Please_note_This_form_is_not_',
+                     '_1_Site_appearance',
+                     'Primary_secondary_and_tertiar',
+                     'Appearance_of_primary_settlers',
+                     'Appearance_of_anaerobic_digest',
+                     'Appearance_of_anaerobic_baffle',
+                     'Appearance_of_Upflow_Anaerobic',
+                     'Appearance_of_constructed_wetl',
+                     'Appearance_of_trickling_filter',
+                     'Appearance_of_activated_sludge',
+                     'Appearance_of_Moving_Bed_Biofi',
+                     'Appearance_of_Rotating_Biologi',
+                     'Appearance_of_Membrane_Bioreac',
+                     'Appearance_of_secondary_settle',
+                     'Appearance_of_pond_systems_e_',
+                     'Appearance_of_aerators',
+                     'Appearance_of_chlorination',
+                     'Appearance_of_pumps',
+                     'Appearance_of_sludge_drying_be_001',
+                     'Site_appearance',
+                     'Design_related_aspects',
+                     '_2_Infrastructure_condition',
+                     '_3_Operational_aspects',
+                     '_4_Wastewater_and_sludge_chara',
+                     'Photo_checklist',
+                     'Interviewer_s_notes_and_feedba']
+        self.assertTrue(all([not c in res.columns for c in notenames])) 
+        self.surv.arguments['--keepnotes'] = True
+        res = self.surv._handle_notes(self.surv.quest)
+        self.assertTrue((res.loc[:, notenames].values == '_NOTE_').all())
+        
+        
 
 
     
