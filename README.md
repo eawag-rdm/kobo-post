@@ -52,7 +52,7 @@ Options:
   question descriptor.
 + Columns that are marked as "notes" in the form definition are
   dropped (after checking that they don't contain non-empty cells),
-  unless option `--keepnotes` is set.
+  unless option `--keepnotes` is set. In this case, the respective cells are set to **`_NOTE_`.** 
 
 ## Installation
 

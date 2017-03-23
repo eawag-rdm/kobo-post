@@ -206,7 +206,9 @@ class TestSurvey(TestCase):
 
     def test__re_sort_columns(self):
         res = self.surv._re_sort_columns(self.surv.quest)
-        print(res)
+        self.assertEqual(list(res.columns[[16,23]]),
+                         ['group_vq7sw37[1]/What_pre_treatment_stages_are',
+                          'group_vq7sw37[4]/Others_003'])
         
         
 
