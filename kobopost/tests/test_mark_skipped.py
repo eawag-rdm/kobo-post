@@ -203,6 +203,12 @@ class TestSurvey(TestCase):
         self.surv.arguments['--keepnotes'] = True
         res = self.surv._handle_notes(self.surv.quest)
         self.assertTrue((res.loc[:, notenames].values == '_NOTE_').all())
+
+    def test__re_sort_columns(self):
+        res = self.surv._re_sort_columns(self.surv.quest)
+        self.assertEqual(list(res.columns[[16,23]]),
+                         ['group_vq7sw37[1]/What_pre_treatment_stages_are',
+                          'group_vq7sw37[4]/Others_003'])
         
         
 

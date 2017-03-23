@@ -37,6 +37,10 @@ class FormDef(object):
         self.L = XLSFormLexer()
         self.prefixpat = r'(group_\S+\[\d+\]/)'
 
+    def get_form(self):
+        """returns the current formdef dataframe"""
+        return self.form
+
     def _check_colnames(self, conds):
         "check for empty strings in 'name' - column"
         wrong = conds[conds.name == '']
@@ -154,6 +158,7 @@ class Survey(object):
         self.data, self.sheetnames = self._read_workbook()
         self.quest = self.join_main_and_groups()
         self.F = FormDef(arguments['<form_definition>'])
+        self.orig_formdef = self.F.get_form()
 
         self._repl_na()
 
@@ -320,7 +325,57 @@ class Survey(object):
         newform.replace(to_replace='', value=na_marker, inplace=True)
         newform.fillna(value=na_marker, inplace=True)
         return newform
-    
+
+    def _re_sort_columns(self, form):
+        """Puts "group"-columns into the position they appear in the form
+        definition.
+        
+        """
+        newform = form.copy(deep=True)
+        formdefnames = self.orig_formdef.loc[:, 'name'] #names in form definition
+        survcols = form.columns #columns names in survey
+        grouppat = r'(?P<is_group>(?P<group_id>group_\w+)\[\d+\]/)?(?P<question>[\w/]+)'
+        
+        def fullmatchdict(mo):
+            md = mo.groupdict()
+            md.update({'match': mo.group(0)})
+            return md
+        
+        survcolgroupmatch = [[pos, fullmatchdict(re.match(grouppat, c))]
+                             for pos, c in enumerate(survcols)]
+        
+        def _move_group(survmatch, pos):
+            # create hole in survcol - positions
+            grouplen = len(survmatch)
+            for s in survcolgroupmatch:
+                s[0] = s[0] + grouplen if s[0] > pos else s[0]
+            # move group questions
+            survmatch.sort(key=lambda x: x[0])
+            for gcol in survmatch:
+                index = survcolgroupmatch.index(gcol)
+                survcolgroupmatch[index][0] = pos+1
+                pos += 1
+            return pos
+
+        pos = 0
+        for nam in formdefnames:
+            survmatch = [s for s in survcolgroupmatch if s[1]['question'] == nam]
+            if len(survmatch) == 0:
+                continue
+            elif (not survmatch[0][1]['is_group']) and len(survmatch) == 1:
+                pos = survmatch[0][0]
+            elif survmatch[0][1]['is_group']:
+                pos = _move_group(survmatch, pos)
+            else:
+                raise Exception('ERROR: Found multiple instances of {}'.format(nam))
+        # new list of columnnames
+        survcolgroupmatch.sort(key=lambda x: x[0])
+        newcols = [x[1]['match'] for x in survcolgroupmatch]
+        assert(set(list(survcols)) == set(newcols))
+        # re-ordered form
+        newform = newform[newcols]
+        return newform
+        
     def write_new_questionaire(self):
         base = os.path.splitext(self.arguments['<questionaire>'])[0]
         basename = os.path.basename(base)
@@ -330,6 +385,7 @@ class Survey(object):
         newform = self._mk_final_table()
         if self.arguments['--fullquestions']:
             newform = self._insert_question_row(newform)
+        newform = self._re_sort_columns(newform)
         ext = os.path.splitext(outpath)[1]
         if ext == '.csv':
             with open(outpath, 'w') as f:
