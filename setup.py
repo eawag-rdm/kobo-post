@@ -10,7 +10,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='kobopost',
-    version='1.0.0',
+    version='1.0.1',
 
     description="""Package to post-process surveys that were created with kobotoolbox.
     Currently this provides one command line script: mark_skipped.
