@@ -231,7 +231,8 @@ class Survey(object):
             
     def _repl_na(self):
         "replace n/a with empty string"
-        self.quest.replace(to_replace='n/a', value='', inplace=True)
+        self.quest.replace(to_replace=['n/a', np.nan],
+                           value=['', ''], inplace=True)
         
     def _get_column(self, colname):
         "returns series of lists for cells in colname"
