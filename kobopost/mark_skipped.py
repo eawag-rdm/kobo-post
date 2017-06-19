@@ -35,7 +35,7 @@ class FormDef(object):
                                   keep_default_na=[]).applymap(lambda x: str(x))
         self.P = XLSFormParser()
         self.L = XLSFormLexer()
-        self.prefixpat = r'(group_\S+\[\d+\]/)'
+        self.prefixpat = r'(\S+(?:\[\d+\])?/)'
 
     def get_form(self):
         """returns the current formdef dataframe"""
@@ -68,6 +68,43 @@ class FormDef(object):
                 oldcond = self.form.loc[i, 'relevant']
                 joinlist = [c for c in [oldcond, condition] if c != '']
                 self.form.loc[i, 'relevant'] = ' and '.join(joinlist)
+
+    def collect_loop_info(self):
+        """Gather info about columnames defined in repeat-loops"""
+        repeatstack = []
+        groupstack = []
+        groups = []
+        for i, l in self.form.iterrows():
+            print(i)
+            if re.match('\s*begin\s+repeat', l.type):
+                repeatstack.append({'start': i, 'type': 'repeat',
+                              'name': l['name']})
+            elif re.match('\s*begin\s+group', l.type):
+                groupstack.append({'start': i, 'type': 'group',
+                              'name': l['name']})
+            elif re.match('\s*end\s+repeat', l.type):
+                groups.append(repeatstack.pop())
+                
+
+                              groups.append(stack.pop())
+                    groups[-1]['depth'] = len(stack)
+                    groups[-1]['stop'] = i
+        # idxstart = self.form.loc[self.form['type'] == 'begin repeat',:].index
+        # idxend = self.form.loc[self.form['type'] == 'end repeat',:].index
+        # indexranges = [range(a+1, b) for a, b in zip(idxstart, idxend)] 
+        # groups = [self.form.loc[i, 'name'] for i in idxstart]
+        # colnamegroups = [self.form.loc[a+1:b-1, 'name']
+        #                  for a, b in zip(idxstart, idxend)]
+        # assert(len(idxstart) == len(idxend) == len(groups))
+        
+        # loopdict = {groups[i]: {'indices': list(indexranges[i]),
+        #                         'colnames': list(colnamegroups[i])}
+        #             for i in range(0, len(groups))}
+        # indexdict = {idx: grp
+        #              for i, grp in enumerate(groups)
+        #              for idx in indexranges[i]}
+        # return (loopdict, indexdict)
+        
     
     def mk_loopgrouping(self, survey):
         """Modifies the form description to explicitly define
@@ -91,23 +128,7 @@ class FormDef(object):
                 repdf = repdf.append(newrule.set_value('relevant', newcondition))
             return(repdf)
 
-        def collect_loop_info():
-            """Gather info about columnames defined in repeat-loops"""
-            idxstart = self.form.loc[self.form['type'] == 'begin repeat',:].index
-            idxend = self.form.loc[self.form['type'] == 'end repeat',:].index
-            indexranges = [range(a+1, b) for a, b in zip(idxstart, idxend)] 
-            groups = [self.form.loc[i, 'name'] for i in idxstart]
-            colnamegroups = [self.form.loc[a+1:b-1, 'name']
-                             for a, b in zip(idxstart, idxend)]
-            assert(len(idxstart) == len(idxend) == len(groups))
 
-            loopdict = {groups[i]: {'indices': list(indexranges[i]),
-                                    'colnames': list(colnamegroups[i])}
-                        for i in range(0, len(groups))}
-            indexdict = {idx: grp
-                         for i, grp in enumerate(groups)
-                         for idx in indexranges[i]}
-            return (loopdict, indexdict)
 
         def get_rules_in_loops_by_idx(indexdict):
             "find conditional rows in repeat-loops"
@@ -130,7 +151,7 @@ class FormDef(object):
             self.form = self.form.drop(idx)
             self.form =self.form.append(repdf)
         self._elim_condition_loops()
-        loopdict, indexdict = collect_loop_info()
+        loopdict, indexdict = self.collect_loop_info()
         idx_relevant = get_rules_in_loops_by_idx(indexdict)
         for idx in idx_relevant:
             expand_form(idx, indexdict)

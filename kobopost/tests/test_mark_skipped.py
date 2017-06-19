@@ -83,6 +83,37 @@ class TestFormDef(TestCase):
                              "other'")]])
 
         self.assertTrue(np.all(l == expect))
+        
+    def test_collect_loop_info(self):
+        self.form = FormDef(os.path.join(datapath, 'Test_Formdef_Loops_1.xls'))
+        self.form.collect_loop_info()
+        # arguments = self.arguments
+        # arguments.update({'<form_definition>': os.path.join(datapath, 'Test_Formdef_Loops_1.xls')})
+        # self.surv = Survey(arguments)
+        # self.form.mk_loopgrouping(self.surv)
+        # l = self.form.form.loc[5, ['name', 'relevant']].values
+        # expect = np.array([['group_vq7sw37[1]/Others_003',
+        #                     ("${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'kitchen_grease' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'oil_skimmer' or ${group_vq7sw37[1]/What_pre_treatment_sta"
+        #                      "ges_are} = 'screen_with_ma' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'screen_with_me' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'grit_removal' or ${group_vq7s"
+        #                      "w37[1]/What_pre_treatment_stages_are} = 'grease_trap_at' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = 'integrated_gri' or ${group_vq7sw37[1]/What_pre_treatment_stages_are} = '"
+        #                      "other'")],
+        #                    ['group_vq7sw37[2]/Others_003',
+        #                     ("${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'kitchen_grease' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'oil_skimmer' or ${group_vq7sw37[2]/What_pre_treatment_sta"
+        #                      "ges_are} = 'screen_with_ma' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'screen_with_me' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'grit_removal' or ${group_vq7s"
+        #                      "w37[2]/What_pre_treatment_stages_are} = 'grease_trap_at' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = 'integrated_gri' or ${group_vq7sw37[2]/What_pre_treatment_stages_are} = '"
+        #                      "other'")],
+        #                    ['group_vq7sw37[3]/Others_003',
+        #                     ("${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'kitchen_grease' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'oil_skimmer' or ${group_vq7sw37[3]/What_pre_treatment_sta"
+        #                      "ges_are} = 'screen_with_ma' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'screen_with_me' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'grit_removal' or ${group_vq7s"
+        #                      "w37[3]/What_pre_treatment_stages_are} = 'grease_trap_at' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = 'integrated_gri' or ${group_vq7sw37[3]/What_pre_treatment_stages_are} = '"
+        #                      "other'")],
+        #                    ['group_vq7sw37[4]/Others_003',
+        #                     ("${group_vq7sw37[4]/What_pre_treatment_stages_are} = 'kitchen_grease' or ${group_vq7sw37[4]/What_pre_treatment_stages_are} = 'oil_skimmer' or ${group_vq7sw37[4]/What_pre_treatment_sta"
+        #                      "ges_are} = 'screen_with_ma' or ${group_vq7sw37[4]/What_pre_treatment_stages_are} = 'screen_with_me' or ${group_vq7sw37[4]/What_pre_treatment_stages_are} = 'grit_removal' or ${group_vq7s"
+        #                      "w37[4]/What_pre_treatment_stages_are} = 'grease_trap_at' or ${group_vq7sw37[4]/What_pre_treatment_stages_are} = 'integrated_gri' or ${group_vq7sw37[4]/What_pre_treatment_stages_are} = '"
+        #                      "other'")]])
+
+        # self.assertTrue(np.all(l == expect))
 
         
 class TestSurvey(TestCase):
