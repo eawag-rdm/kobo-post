@@ -17,7 +17,10 @@ class TestParser(TestCase):
                        "lant_growth' and 'hullu' = 'hullu')",
                        "selected(${ What_could_be_the_reason_Any_ }, 'other_reason')",
                        "illegal = 'yes'",
-                       "'leftside' = [holla]"]
+                       "${column} = noquotes",
+                       "'leftside' = [holla]",
+                       "whateva >= hol{a"]
+        
         self.perrors = ["'yes' 'no'", "and 'yes'"]
         self.partest = ["'one' = '1' and 'two' > '0' or 'three' <= '9'",
                         "'one' = '1' and ('two' > '0' or 'three' <= '9')",
@@ -58,20 +61,26 @@ class TestParser(TestCase):
                         ('COLUMN','${ What_could_be_the_reason_Any_ }',1,9),
                         (',',',',1,43),
                         ('STRINGLIT',"'other_reason'",1,45),
-                        ('RPAREN',')',1,59)]]
+                        ('RPAREN',')',1,59)],
+                       [('STRINGLIT', "'illegal'", 1, 0),
+                        ('EQUAL', '==', 1, 8),
+                        ('STRINGLIT', "'yes'", 1, 10)],
+                       [('COLUMN', '${column}', 1, 0),
+                        ('EQUAL', '==', 1, 10),
+                        ('STRINGLIT', "'noquotes'", 1, 12)]]
 
     def test_lexer(self):
-        for i, ts in enumerate(self.tconds[0:3]):
+        for i, ts in enumerate(self.tconds[0:5]):
             self.L.input(ts)
             for n, tok in enumerate(self.L):
                 self.assertEqual(
                     (tok.type, tok.value, tok.lineno,tok.lexpos),
                     self.lexres[i][n])
-        self.L.input(self.tconds[3])
+        self.L.input(self.tconds[5])
         with self.assertRaises(LexError):
             for tok in self.L:
                 pass
-        self.L.input(self.tconds[4])
+        self.L.input(self.tconds[6])
         with self.assertRaises(LexError):
             for tok in self.L:
                 pass

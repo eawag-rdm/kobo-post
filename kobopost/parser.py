@@ -54,8 +54,10 @@ def XLSFormLexer():
         r'[a-zA-Z_][a-zA-Z_0-9]*'
         t.type = reserved.get(t.value, None)
         if not t.type:
-            raise lex.LexError('Illegal token: {} at lexpos {}'
-                               .format(t.value, t.lexpos), '')
+            # name-like tokens that are not reserved are string literals.
+            t.type = 'STRINGLIT'
+            t.value = "'" + t.value + "'"
+            return t
         else:
             return t
     
