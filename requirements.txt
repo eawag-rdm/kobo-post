@@ -1,0 +1,4 @@
+docopt
+xlrd
+pandas
+ply
