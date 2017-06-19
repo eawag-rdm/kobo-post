@@ -71,24 +71,24 @@ class FormDef(object):
 
     def collect_loop_info(self):
         """Gather info about columnames defined in repeat-loops"""
-        repeatstack = []
-        groupstack = []
+        stack = []
         groups = []
+        startpat = re.compile('(\s*begin\s+(?P<typ>repeat|group))')
+        stoppat = re.compile('(\s*end\s+(?P<typ>repeat|group))')
         for i, l in self.form.iterrows():
             print(i)
-            if re.match('\s*begin\s+repeat', l.type):
-                repeatstack.append({'start': i, 'type': 'repeat',
+            mat = re.match(startpat, l.type)
+            if mat:
+                stack.append({'start': i, 'type': mat.groupdict()['typ'],
                               'name': l['name']})
-            elif re.match('\s*begin\s+group', l.type):
-                groupstack.append({'start': i, 'type': 'group',
-                              'name': l['name']})
-            elif re.match('\s*end\s+repeat', l.type):
-                groups.append(repeatstack.pop())
-                
-
-                              groups.append(stack.pop())
-                    groups[-1]['depth'] = len(stack)
-                    groups[-1]['stop'] = i
+                continue
+            mat = re.match(stoppat, l.type)
+            if mat:
+                groups.append(stack.pop())
+                groups[-1]['depth'] = len(stack)
+                groups[-1]['stop'] = i
+        groups = sorted(groups, key=lambda x: x['depth'])
+        return(groups)
         # idxstart = self.form.loc[self.form['type'] == 'begin repeat',:].index
         # idxend = self.form.loc[self.form['type'] == 'end repeat',:].index
         # indexranges = [range(a+1, b) for a, b in zip(idxstart, idxend)] 

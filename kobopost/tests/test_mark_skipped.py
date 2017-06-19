@@ -86,7 +86,8 @@ class TestFormDef(TestCase):
         
     def test_collect_loop_info(self):
         self.form = FormDef(os.path.join(datapath, 'Test_Formdef_Loops_1.xls'))
-        self.form.collect_loop_info()
+        res = self.form.collect_loop_info()
+        print(res)
         # arguments = self.arguments
         # arguments.update({'<form_definition>': os.path.join(datapath, 'Test_Formdef_Loops_1.xls')})
         # self.surv = Survey(arguments)
