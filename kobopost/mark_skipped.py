@@ -50,24 +50,49 @@ class FormDef(object):
             conds.drop(wrong.index, inplace=True)
         return conds
 
-    def _elim_condition_loops(self):
-        """Puts conditions that are set for loops inside the loop"""
-        idxstart = self.form.loc[self.form['type'] == 'begin repeat', :].index
-        idxend = self.form.loc[self.form['type'] == 'end repeat',:].index
-        # find condition loops
-        condloopsstart = []
-        for i, startidx in enumerate(idxstart):
-            if self.form.loc[startidx, 'relevant'] != '':
-                condloopsstart.append(i)
-        indexranges = [range(a, b) for a, b in zip(idxstart[condloopsstart],
-                                                   idxend[condloopsstart])]
-        for ran in indexranges:
-            condition = self.form.loc[ran[0], 'relevant']
-            self.form.loc[ran[0], 'relevant'] = ''
-            for i in range(ran[0]+1, ran[-1]+1):
-                oldcond = self.form.loc[i, 'relevant']
-                joinlist = [c for c in [oldcond, condition] if c != '']
-                self.form.loc[i, 'relevant'] = ' and '.join(joinlist)
+    def _elim_condition_loops(self, groups):
+        """Puts conditions that are set for loops or groups
+        inside the loop or group"""
+        # idxstart = self.form.loc[self.form['type'] == 'begin repeat', :].index
+        # idxend = self.form.loc[self.form['type'] == 'end repeat',:].index
+        def _joincond(relev, cond):
+            print('---------- in _joincond')
+            print('RELEV: {}'.format(relev))
+            print('COND: {}'.format(cond))
+            res = [r + ' and ' + cond if r else cond for r in relev]
+            print('RES: {}'.format(res))
+            return res
+            
+        for g in groups:
+            condition = self.form.loc[g['start'], 'relevant']
+            if condition:
+                idxrange = range(g['start']+1, g['stop'])
+                self.form.loc[idxrange, 'relevant'] = (
+                    self.form.loc[idxrange, 'relevant']
+                    .apply(_joincond, args=(condition,)))
+                self.form.loc[g['start'], 'relevant'] = ''
+        
+
+
+                    
+                # oldconds = self.form.loc[idxrange, 'relevant']
+                # joinlists = [c for c in [oldcond, condition] if c != '']
+                
+                
+        # # find condition loops
+        # condloopsstart = []
+        # for i, startidx in enumerate(idxstart):
+        #     if self.form.loc[startidx, 'relevant'] != '':
+        #         condloopsstart.append(i)
+        # indexranges = [range(a, b) for a, b in zip(idxstart[condloopsstart],
+        #                                            idxend[condloopsstart])]
+        # for ran in indexranges:
+        #     condition = self.form.loc[ran[0], 'relevant']
+        #     self.form.loc[ran[0], 'relevant'] = ''
+        #     for i in range(ran[0]+1, ran[-1]+1):
+        #         oldcond = self.form.loc[i, 'relevant']
+        #         joinlist = [c for c in [oldcond, condition] if c != '']
+        #         self.form.loc[i, 'relevant'] = ' and '.join(joinlist)
 
     def collect_loop_info(self):
         """Gather info about columnames defined in repeat-loops"""
@@ -76,11 +101,10 @@ class FormDef(object):
         startpat = re.compile('(\s*begin\s+(?P<typ>repeat|group))')
         stoppat = re.compile('(\s*end\s+(?P<typ>repeat|group))')
         for i, l in self.form.iterrows():
-            print(i)
             mat = re.match(startpat, l.type)
             if mat:
                 stack.append({'start': i, 'type': mat.groupdict()['typ'],
-                              'name': l['name']})
+                              'name': l['name'], 'condition': l['relevant']})
                 continue
             mat = re.match(stoppat, l.type)
             if mat:
@@ -150,8 +174,10 @@ class FormDef(object):
             # replace the old rule - line with new ones
             self.form = self.form.drop(idx)
             self.form =self.form.append(repdf)
+            
         self._elim_condition_loops()
-        loopdict, indexdict = self.collect_loop_info()
+        # loopdict, indexdict = self.collect_loop_info()
+        groups = self.collect_loop_info()
         idx_relevant = get_rules_in_loops_by_idx(indexdict)
         for idx in idx_relevant:
             expand_form(idx, indexdict)
